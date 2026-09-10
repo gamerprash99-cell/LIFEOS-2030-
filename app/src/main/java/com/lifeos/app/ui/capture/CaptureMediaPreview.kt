@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -39,11 +40,6 @@ import com.lifeos.app.ui.components.GlassCard
 import kotlinx.coroutines.delay
 import java.io.File
 
-/**
- * Large photo preview using the actual captured file — the real fix for
- * "user captures a photo but gets no visible result". No placeholder/fake
- * image is ever shown; if the file is missing, that's shown honestly too.
- */
 @Composable
 fun PhotoPreview(filePath: String, modifier: Modifier = Modifier) {
     val fileExists = remember(filePath) { File(filePath).exists() }
@@ -51,10 +47,7 @@ fun PhotoPreview(filePath: String, modifier: Modifier = Modifier) {
         AsyncImage(
             model = filePath,
             contentDescription = "Captured photo",
-            modifier = modifier
-                .fillMaxWidth()
-                .aspectRatio(3f / 4f)
-                .clip(RoundedCornerShape(18.dp)),
+            modifier = modifier.fillMaxWidth().aspectRatio(3f / 4f).clip(RoundedCornerShape(18.dp)),
             contentScale = androidx.compose.ui.layout.ContentScale.Crop
         )
     } else {
@@ -62,11 +55,6 @@ fun PhotoPreview(filePath: String, modifier: Modifier = Modifier) {
     }
 }
 
-/**
- * Video preview: shows a real extracted frame from the captured file first
- * (no autoplay), with a tap-to-play control. Once tapped, mounts a real
- * VideoView with Android's built-in MediaController (play/pause/seek).
- */
 @Composable
 fun VideoPreview(filePath: String, modifier: Modifier = Modifier) {
     val fileExists = remember(filePath) { File(filePath).exists() }
@@ -80,11 +68,7 @@ fun VideoPreview(filePath: String, modifier: Modifier = Modifier) {
     val thumbnail = rememberVideoThumbnail(filePath)
 
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(16f / 9f)
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color.Black),
+        modifier = modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(18.dp)).background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
         if (isPlaying) {
@@ -111,18 +95,13 @@ fun VideoPreview(filePath: String, modifier: Modifier = Modifier) {
             }
             IconButton(
                 onClick = { isPlaying = true },
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(Color.Black.copy(alpha = 0.5f))
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.5f))
             ) {
                 Icon(Icons.Filled.PlayArrow, contentDescription = "Play video", tint = Color.White)
             }
         }
 
-        IconButton(
-            onClick = { showFullscreen = true },
-            modifier = Modifier.align(Alignment.TopEnd)
-        ) {
+        IconButton(onClick = { showFullscreen = true }, modifier = Modifier.align(Alignment.TopEnd)) {
             Icon(Icons.Filled.Fullscreen, contentDescription = "Open fullscreen video", tint = Color.White)
         }
     }
@@ -132,10 +111,6 @@ fun VideoPreview(filePath: String, modifier: Modifier = Modifier) {
     }
 }
 
-/**
- * Audio preview: a simple, real MediaPlayer-backed play/pause control with
- * elapsed/total duration — plays the actual recorded file.
- */
 @Composable
 fun AudioPreview(filePath: String, modifier: Modifier = Modifier) {
     val fileExists = remember(filePath) { File(filePath).exists() }
@@ -183,10 +158,7 @@ fun AudioPreview(filePath: String, modifier: Modifier = Modifier) {
                     isPlaying = true
                 }
             }) {
-                Icon(
-                    if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = if (isPlaying) "Pause" else "Play recording"
-                )
+                Icon(if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, contentDescription = if (isPlaying) "Pause" else "Play recording")
             }
             androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
                 val total = durationMs ?: 0L
@@ -207,9 +179,6 @@ fun AudioPreview(filePath: String, modifier: Modifier = Modifier) {
 @Composable
 private fun MissingFileNotice(modifier: Modifier = Modifier) {
     GlassCard(modifier = modifier.fillMaxWidth()) {
-        Text(
-            "This file could not be found on the device. It may have been removed outside the app.",
-            style = MaterialTheme.typography.bodySmall
-        )
+        Text("This file could not be found on the device. It may have been removed outside the app.", style = MaterialTheme.typography.bodySmall)
     }
 }
