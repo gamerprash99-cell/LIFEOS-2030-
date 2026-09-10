@@ -10,7 +10,6 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val LightColors = lightColorScheme(
@@ -45,7 +44,7 @@ private val DarkColors = darkColorScheme(
     error = Color(0xFFFFB4AB),
 )
 
-data class GlassColors(val surface: Color, val border: Color)
+data class GlassColors(val surface: androidx.compose.ui.graphics.Color, val border: androidx.compose.ui.graphics.Color)
 val LocalGlassColors = staticCompositionLocalOf { GlassColors(GlassLight, GlassBorderLight) }
 
 @Composable
@@ -69,7 +68,7 @@ fun LifeOSTheme(
 }
 
 private object ColorCompat {
-    val Dark = Color(0xFF261A35)
-    val Lavender = Color(0xFFEADDFF)
-    val Pink = Color(0xFFFFD8E4)
+    val Dark = androidx.compose.ui.graphics.Color(0xFF261A35)
+    val Lavender = androidx.compose.ui.graphics.Color(0xFFEADDFF)
+    val Pink = androidx.compose.ui.graphics.Color(0xFFFFD8E4)
 }

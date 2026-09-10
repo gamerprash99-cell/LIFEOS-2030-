@@ -17,6 +17,18 @@ integration was removed (see `docs/11_AI_SYSTEM.md`). There is no API key
 anywhere in the app anymore, so there's nothing to protect. This is the
 single largest reduction in attack surface from this pass.
 
+
+### ℹ️ RESOLVED — Biometric authentication is now Keystore-bound
+
+The biometric App Lock path now uses Android `BiometricPrompt` with
+`BIOMETRIC_STRONG` and an AES key held in Android Keystore. The key requires
+user authentication and is configured to be invalidated when biometric
+enrollment changes. The app never accesses or stores biometric templates.
+
+This hardening does **not** make Android biometrics app-specific: the
+underlying biometric enrollment remains controlled by Android. Users who need
+an independent app secret can use the separate LifeOS PIN mode.
+
 ### 🟡 MEDIUM — App PIN hash uses DataStore Preferences, not hardware-backed storage
 
 **Where**: `core/util/SettingsStore.kt` — the PIN's salted SHA-256 hash and

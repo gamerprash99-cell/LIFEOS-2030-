@@ -36,7 +36,17 @@ fun LifeOSBottomBar(navController: NavHostController) {
             val selected = destination?.hierarchy?.any { it.route == item.screen.route } == true
             NavigationBarItem(
                 selected = selected,
-                onClick = { navController.navigate(item.screen.route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
+                onClick = {
+                    if (item.screen == Screen.Home) {
+                        navController.popBackStack(Screen.Home.route, inclusive = false)
+                    } else {
+                        navController.navigate(item.screen.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
                 icon = { Icon(if (selected) item.selectedIcon else item.unselectedIcon, item.label) },
                 label = { Text(item.label) },
                 colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer)

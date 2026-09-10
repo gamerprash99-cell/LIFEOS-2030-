@@ -137,11 +137,15 @@ private fun HabitRow(habit: HabitEntity, habitRepository: HabitRepository, analy
             }
             LifeOSProgress(percentToday / 100f, label = "$progress/${habit.goalCount} today · $percentToday%")
             analytics?.let { stats ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    LifeOSStatChip("Current streak", "${stats.currentStreak}d", Modifier.weight(1f))
-                    LifeOSStatChip("Best streak", "${stats.longestStreak}d", Modifier.weight(1f))
-                    LifeOSStatChip("7 days", "${stats.completionPercentThisWeek}%", Modifier.weight(1f))
-                    LifeOSStatChip("30 days", "${stats.completionPercentThisMonth}%", Modifier.weight(1f))
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        LifeOSStatChip("Current streak", "${stats.currentStreak}d", Modifier.weight(1f))
+                        LifeOSStatChip("Best streak", "${stats.longestStreak}d", Modifier.weight(1f))
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        LifeOSStatChip("7 days", "${stats.completionPercentThisWeek}%", Modifier.weight(1f))
+                        LifeOSStatChip("30 days", "${stats.completionPercentThisMonth}%", Modifier.weight(1f))
+                    }
                 }
             }
         }

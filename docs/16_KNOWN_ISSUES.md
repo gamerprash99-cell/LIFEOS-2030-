@@ -117,10 +117,10 @@
 
 ---
 
-### Issue #8 — No database encryption / AI key not encrypted
+### Issue #8 — No database encryption at rest
 
 - **Severity**: 🟠 High (security)
-- **Description**: See `docs/08_SECURITY.md` findings #1 and #2 in full.
+- **Description**: Database encryption at rest remains a future hardening item. The current app has no external AI key to protect.
 - **Status**: Open — tracked here for visibility alongside functional issues.
 
 ---
@@ -142,7 +142,7 @@
 
 ---
 
-### Issue #11 — [RESOLVED] No way to set an AI API key through the UI
+### Issue #11 — [RESOLVED] Cloud AI dependency removed
 
 - **Severity**: Was 🟠 High
 - **Description**: Previously, AI features required a cloud API key with no UI to enter one.

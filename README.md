@@ -189,6 +189,100 @@ git push -u origin main
 
 ---
 
+
+## 2026-09-11 — Final UI/UX, navigation, backup, alarm and capture pass
+
+This is the current implementation record for the latest coding pass. No
+`UPDATE.md` file is used; project updates are recorded here and in the
+relevant `/docs` files.
+
+### User-facing fixes and improvements
+
+- Home scrolling now respects system insets and bottom content clearance so
+  the next section/header is not clipped while scrolling.
+- Home navigation from linked Spending/Expenses and Recent Activity/Timeline
+  content now returns through the existing navigation graph instead of
+  requiring the phone's hardware/software Back button.
+- Photo/capture detail keeps the captured date and time in a dedicated,
+  readable metadata section below the media, with safe scroll/bottom spacing.
+- Video viewing has a dedicated 16:9 viewer, play/pause, seek bar, 10-second
+  backward/forward controls, and landscape fullscreen with restoration of the
+  previous orientation on exit.
+- Capture controls use safer bottom insets and improved visual hierarchy.
+- The LifeOS violet/lavender palette remains the product identity; the UI was
+  not intentionally flattened into a grey-only theme.
+- Shared Material 3 LifeOS components and lightweight Compose animations are
+  used for cards, progress, status, transitions and interaction feedback.
+- Habits expose current streak, best streak, 7-day completion and 30-day
+  completion directly on the list, rather than hiding the useful metrics in
+  the detail screen.
+
+### App Lock
+
+- App Lock exposes `None`, `PIN`, and `Biometric` choices.
+- PIN verification remains a local salted-hash flow with recovery support;
+  the PIN itself is never stored as plaintext.
+- Biometric authentication uses Android `BiometricPrompt` with
+  `BIOMETRIC_STRONG` and an Android Keystore-bound AES credential configured
+  for biometric-enrollment invalidation.
+- Biometric setup/authentication failures are surfaced to the user instead of
+  silently leaving the app or pretending authentication succeeded.
+
+### Backup and restore
+
+- Backup remains a complete local JSON representation of the LifeOS data
+  repositories.
+- Export uses Android's native document/file picker so the user can choose a
+  local storage destination instead of being forced into a share-only flow.
+- Restore uses Android's native document picker to select a previously saved
+  LifeOS JSON backup.
+- Restore continues through the existing repositories and preserves the
+  existing Room architecture; the database is not deleted or recreated.
+
+### Daily alarm
+
+- Added a daily alarm setting with configurable time.
+- Alarm opens a dedicated challenge screen and loops the alarm sound until the
+  challenge is solved.
+- Every alarm instance generates a fresh addition or subtraction problem.
+- Operands/results are constrained to the requested small range; the answer
+  entry is limited to two digits.
+- The Back button cannot dismiss the active alarm challenge; a correct answer
+  is required to stop it.
+- Alarm scheduling is local Android `AlarmManager` based and does not require
+  a cloud service.
+
+### Morning photo
+
+- Added a morning-photo suggestion flow that can launch the existing camera
+  capture and persist the resulting photo as a normal LifeOS capture.
+- The captured photo is therefore available to the existing Timeline through
+  the normal persisted capture record rather than through a separate cloud
+  gallery.
+
+### Architecture and data guarantees
+
+- Kotlin + Jetpack Compose architecture is preserved.
+- Existing Room entities, DAOs, repositories, ViewModels, use cases and
+  Compose Navigation remain the integration boundaries.
+- No external/cloud AI service, API key, telemetry, Firebase, remote database
+  or mandatory network dependency was introduced.
+- No destructive Room migration or database reset was introduced.
+- `UPDATE.md` is intentionally not used; this README and `/docs` are the
+  documentation record for the current work.
+
+### Verification status
+
+Source-level review was performed for the changed areas. A full Android
+`assembleDebug`/device test is **not claimed as passed** in this environment
+because the supplied archive does not provide a usable Gradle wrapper JAR and
+the Android SDK/toolchain is not available here.
+
+The first real build verification should be performed in Android Studio with
+the project's required SDK/JDK. Any build failure should be fixed from the
+first compiler error rather than by suppressing or bypassing it.
+
+
 ## Development Update Log
 
 ### 2026-09-11 — LifeOS UI/UX redesign and media/security correction pass
@@ -261,3 +355,93 @@ This pass was driven by the supplied device screenshots. The goal was not to rep
 - Verify photo detail date/time placement on small and large phones and with larger font scale.
 - Verify PIN and biometric setup/unlock/recovery on a real Android device.
 - Run `assembleDebug`, unit tests, instrumentation tests and lint/static analysis in Android Studio/CI.
+
+---
+
+## 2026-09-11 — Stability, media, backup, alarm and UX pass
+
+This pass fixes the real-device issues reported after the previous UI redesign. The existing Kotlin + Jetpack Compose + Room + hand-written ServiceLocator architecture is preserved.
+
+### Home scrolling and navigation
+- Removed the nested Home `Scaffold` that was causing duplicated window-inset handling and the large/awkward top area.
+- Home content now uses one scroll container with safe top insets, so the greeting/date does not draw underneath the status area while scrolling.
+- Capture FAB is anchored with navigation-bar-safe padding instead of competing with scrolling content.
+- Bottom navigation Home now explicitly pops back to the existing Home destination instead of depending only on a second navigation operation. This fixes Home taps from Expenses/Timeline/detail screens.
+
+### Capture and Timeline media
+- Capture detail now keeps media and its metadata in separate cards.
+- Captured date and time remain visible/readable after scrolling and have additional bottom clearance above navigation.
+- Added a Home Morning Check-in card. It opens the existing CameraX capture flow and saves a `PHOTO` capture with the `Morning check-in` caption directly into the existing Timeline aggregation.
+- The Morning Check-in suggestion disappears after today's morning photo has been saved.
+- No new Timeline database table was introduced.
+
+### Video viewer
+- Fixed the landscape viewer lifecycle problem that could recreate the activity and appear to throw the user out of the app.
+- MainActivity now handles orientation configuration changes for the existing fullscreen viewer instead of destroying the navigation state.
+- Fullscreen video keeps the original aspect ratio on a black viewer surface.
+- Added YouTube-style controls: play/pause, 10-second rewind, 10-second forward, scrubber, elapsed time and duration.
+- Controls auto-hide during playback and reappear when the viewer is tapped.
+- Back/Close exits fullscreen and restores the previous orientation.
+
+### App Lock / biometric
+- Kept the existing `None`, `Biometric` and `PIN` choices in the setup flow.
+- Strengthened the Keystore key configuration for new biometric enrollments with explicit `BIOMETRIC_STRONG` authentication parameters on supported Android versions.
+- Existing invalid Keystore entries are handled without crashing the UI.
+- Added a lightweight pulsing fingerprint/lock animation to setup and unlock screens.
+- PIN recovery remains protected by the stored recovery question and salted hash; there is no plaintext PIN or biometric data storage.
+
+### Android local backup and restore
+- Export no longer writes only to app-private storage and then asks the user to share it.
+- `Export` now uses Android's Storage Access Framework (`ACTION_CREATE_DOCUMENT`) so the user chooses a real local destination such as Downloads.
+- `Restore` uses Android's document picker (`ACTION_OPEN_DOCUMENT`) and restores through the existing repositories/Room data path.
+- Restore is upsert-based and does not recreate or delete the Room database.
+- The JSON backup format remains human-readable and local-only.
+
+### Daily math alarm
+- Added an offline daily alarm feature under Settings → Daily rhythm.
+- User can choose a daily time with the Android/Material time picker and enable/disable the alarm.
+- The alarm is scheduled with Android `AlarmManager`; exact timing is used when the OS allows it, with a safe fallback when exact-alarm access is unavailable.
+- Alarm settings survive process/device restart through DataStore and are rescheduled after boot/time/time-zone changes.
+- Alarm opens a dedicated LifeOS challenge screen.
+- Alarm cannot be dismissed with the Back button; a correct math answer is required.
+- Each alarm gets a new random addition or subtraction problem with a result from 0–98.
+- The challenge plays the device alarm sound in a loop until solved.
+- Notification permission is requested when the user enables the alarm on Android versions that require it.
+- Full-screen alarm notification support is declared so the challenge can be presented like an alarm rather than a normal reminder.
+
+### Hard-coded behavior cleanup
+- Backup version now uses the application's actual `BuildConfig.VERSION_NAME`.
+- Alarm defaults are centralized in the settings store and displayed from stored state rather than fixed screen labels.
+- Important navigation, media timing and safe-area behavior is driven by Android/Compose state and window insets rather than absolute screen coordinates.
+
+### Files added
+- `app/src/main/java/com/lifeos/app/core/reminders/AlarmScheduler.kt`
+- `app/src/main/java/com/lifeos/app/core/reminders/AlarmReceiver.kt`
+- `app/src/main/java/com/lifeos/app/core/reminders/BootReceiver.kt`
+- `app/src/main/java/com/lifeos/app/ui/settings/AlarmChallengeActivity.kt`
+- `app/src/main/java/com/lifeos/app/ui/capture/MorningPhotoSheet.kt`
+
+### Files updated
+- `MainActivity` manifest configuration for orientation stability
+- `AndroidManifest.xml` for alarm/full-screen/boot capabilities
+- `SettingsStore.kt`
+- `NotificationHelper.kt`
+- `BackupRepository.kt`
+- `SettingsScreen.kt`
+- `AppLockManager.kt`
+- `AppLockSetupScreen.kt`
+- `AppLockScreen.kt`
+- `LifeOSBottomBar.kt`
+- `HomeScreen.kt`
+- `CaptureDetailScreen.kt`
+- `VideoFullscreenViewer.kt`
+- `LifeOSNavHost.kt`
+
+### Verification
+- Android SDK/Gradle tooling is not installed in the current coding environment, so a real `assembleDebug`, instrumentation run, or physical-device test is not falsely reported as passed.
+- Manifest XML was parsed successfully.
+- A rough Kotlin source brace/syntax-structure scan completed without unbalanced source blocks.
+- The supplied project still uses its existing Gradle/Android stack; no replacement architecture or language was introduced.
+- Final device verification should cover: Home → Expenses → Home, Home → Timeline → Capture Detail → Home, video fullscreen rotation/seek, biometric setup/unlock, PIN recovery, export to Downloads, restore from a selected JSON backup, 6:00-style daily alarm, and Morning Check-in capture.
+
+`UPDATE.md` is intentionally not used; this README is the single development update record for the current archive.

@@ -36,6 +36,9 @@ class SettingsStore(private val context: Context) {
         val RECOVERY_QUESTION = stringPreferencesKey("recovery_question")
         val RECOVERY_ANSWER_SALT = stringPreferencesKey("recovery_answer_salt")
         val RECOVERY_ANSWER_HASH = stringPreferencesKey("recovery_answer_hash")
+        val ALARM_ENABLED = booleanPreferencesKey("alarm_enabled")
+        val ALARM_HOUR = androidx.datastore.preferences.core.intPreferencesKey("alarm_hour")
+        val ALARM_MINUTE = androidx.datastore.preferences.core.intPreferencesKey("alarm_minute")
     }
 
     val darkThemeEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.DARK_THEME_ENABLED] ?: false }
@@ -46,10 +49,19 @@ class SettingsStore(private val context: Context) {
         it[Keys.APP_LOCK_TYPE]?.let { name -> runCatching { AppLockType.valueOf(name) }.getOrNull() } ?: AppLockType.NONE
     }
     val recoveryQuestion: Flow<String?> = context.dataStore.data.map { it[Keys.RECOVERY_QUESTION] }
+    val alarmEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.ALARM_ENABLED] ?: false }
+    val alarmHour: Flow<Int> = context.dataStore.data.map { it[Keys.ALARM_HOUR] ?: 6 }
+    val alarmMinute: Flow<Int> = context.dataStore.data.map { it[Keys.ALARM_MINUTE] ?: 0 }
 
     suspend fun setDarkThemeEnabled(enabled: Boolean) = context.dataStore.edit { it[Keys.DARK_THEME_ENABLED] = enabled }
     suspend fun setOnboardingComplete(complete: Boolean) = context.dataStore.edit { it[Keys.ONBOARDING_COMPLETE] = complete }
     suspend fun setAiFeaturesEnabled(enabled: Boolean) = context.dataStore.edit { it[Keys.AI_FEATURES_ENABLED] = enabled }
+
+    suspend fun setAlarm(enabled: Boolean, hour: Int, minute: Int) = context.dataStore.edit {
+        it[Keys.ALARM_ENABLED] = enabled
+        it[Keys.ALARM_HOUR] = hour.coerceIn(0, 23)
+        it[Keys.ALARM_MINUTE] = minute.coerceIn(0, 59)
+    }
 
     /** Enables biometric-only App Lock. Caller must have already verified a successful BiometricPrompt auth before calling this. */
     suspend fun enableBiometricLock() = context.dataStore.edit {

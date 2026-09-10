@@ -17,6 +17,8 @@ import com.lifeos.app.core.di.LambdaViewModelFactory
 import com.lifeos.app.core.di.LocalServiceLocator
 import com.lifeos.app.ui.components.*
 import com.lifeos.app.ui.theme.LifeOSSpacing
+import com.lifeos.app.core.util.DateTimeUtils
+import com.lifeos.app.data.db.entities.CaptureType
 
 @Composable
 fun HomeScreen(
@@ -29,26 +31,18 @@ fun HomeScreen(
     onOpenDiary: () -> Unit = {},
     onOpenInsights: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
-    onOpenTimeline: () -> Unit = {}
+    onOpenTimeline: () -> Unit = {},
+    onOpenMorningPhoto: () -> Unit = {}
 ) {
     val locator = LocalServiceLocator.current
     val viewModel: HomeViewModel = viewModel(factory = LambdaViewModelFactory { HomeViewModel(locator.getHomeSummaryUseCase, locator.taskRepository, locator.habitRepository) })
     val summary by viewModel.summary.collectAsState()
+    val todayCaptures by locator.captureRepository.observeForDay(DateTimeUtils.today().toEpochDay()).collectAsState(initial = emptyList())
+    val morningPhotoDone = todayCaptures.any { it.type == CaptureType.PHOTO && it.caption == "Morning check-in" }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onOpenCapture,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                icon = { Icon(Icons.Filled.Add, null) },
-                text = { Text("Capture") }
-            )
-        }
-    ) { padding ->
+    Box(Modifier.fillMaxSize()) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = LifeOSSpacing.screenPadding, top = LifeOSSpacing.screenPadding, end = LifeOSSpacing.screenPadding, bottom = LifeOSSpacing.extendedFabContentClearance),
             verticalArrangement = Arrangement.spacedBy(LifeOSSpacing.sectionSpacing)
         ) {
@@ -74,6 +68,9 @@ fun HomeScreen(
                         }
                     }
                 }
+            }
+            if (!morningPhotoDone) {
+                item { MorningCheckInCard(onClick = onOpenMorningPhoto) }
             }
             item {
                 LifeOSSectionHeader("Tasks", action = { LifeOSStatusPill("View all", onClick = onOpenTasks) })
@@ -163,6 +160,30 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+        ExtendedFloatingActionButton(
+            onClick = onOpenCapture,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            icon = { Icon(Icons.Filled.Add, null) },
+            text = { Text("Capture") },
+            modifier = Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(end = 16.dp, bottom = 16.dp)
+        )
+    }
+}
+
+
+@Composable
+private fun MorningCheckInCard(onClick: () -> Unit) {
+    LifeOSCard(onClick = onClick, modifier = Modifier.animateContentSize()) {
+        Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            LifeOSIconBadge(Icons.Filled.WbSunny)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text("Morning check-in", style = MaterialTheme.typography.titleMedium)
+                Text("Take a quick photo and save it straight to today's Timeline.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.Filled.CameraAlt, null, tint = MaterialTheme.colorScheme.primary)
         }
     }
 }

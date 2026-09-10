@@ -1,5 +1,30 @@
 # 17 — Changelog
 
+## 2026-09-11 — UI/UX, navigation, backup, alarm and capture pass
+
+### Fixed
+- Fixed Home scroll/inset clipping and Home navigation from linked dashboard
+  destinations.
+- Fixed captured-media metadata layout so date/time remains visible.
+- Fixed video fullscreen orientation handling and improved playback controls.
+
+### Added
+- Android document-picker based backup export and restore flows.
+- Daily alarm with a fresh addition/subtraction challenge for every alarm.
+- Morning photo suggestion that saves through the existing Timeline capture
+  pipeline.
+- Improved shared LifeOS UI components and lightweight animations.
+
+### Security
+- Kept PIN App Lock and strengthened biometric App Lock with an
+  Android-Keystore-bound credential and biometric-enrollment invalidation.
+
+### Documentation
+- README and relevant `/docs` files updated in the same project archive.
+- `UPDATE.md` is intentionally not used.
+
+
+
 ## Important note on how this document was produced
 
 ⚠️ **NOT VERIFIED FROM GIT HISTORY** — this repository, as delivered, has no

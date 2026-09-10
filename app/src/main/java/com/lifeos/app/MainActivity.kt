@@ -7,6 +7,9 @@ import androidx.fragment.app.FragmentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -53,7 +56,9 @@ private fun OnboardingGate(content: @Composable () -> Unit) {
     val onboardingComplete by locator.settingsStore.onboardingComplete.collectAsState(initial = false)
 
     if (onboardingComplete) {
-        content()
+        AnimatedVisibility(visible = true, enter = fadeIn() + scaleIn(initialScale = 0.98f), label = "lifeos_startup") {
+            content()
+        }
     } else {
         OnboardingScreen(onFinish = { scope.launch { locator.settingsStore.setOnboardingComplete(true) } })
     }

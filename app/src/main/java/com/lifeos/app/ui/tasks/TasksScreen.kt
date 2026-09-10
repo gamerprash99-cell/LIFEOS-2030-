@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.verticalScroll
@@ -203,6 +202,8 @@ private fun TaskRow(task: TaskEntity, onToggle: (Boolean) -> Unit, onKeepForTomo
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                // Checkbox keeps its own click so tapping it doesn't also trigger the card's ripple twice —
+                // Compose lets a child clickable consume its own tap independently of the parent's.
                 Checkbox(checked = task.isCompleted, onCheckedChange = onToggle)
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -222,10 +223,17 @@ private fun TaskRow(task: TaskEntity, onToggle: (Boolean) -> Unit, onKeepForTomo
                     }
                 }
             }
+            // "Move to tomorrow" is an ACTION button, not a status — kept visually
+            // separate (smaller, muted, with an icon) so it can never be mistaken
+            // for the task's actual due date shown above.
             if (!task.isCompleted) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onKeepForTomorrow) {
-                        Icon(Icons.Filled.ArrowForward, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
+                        Icon(
+                            Icons.Filled.ArrowForward,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 4.dp)
+                        )
                         Text("Move to tomorrow", style = MaterialTheme.typography.labelMedium)
                     }
                 }

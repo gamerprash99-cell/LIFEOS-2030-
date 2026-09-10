@@ -1,5 +1,11 @@
 # 06 — API Documentation
 
+> **Current status (2026-09-11):** LifeOS exposes no backend API and makes no
+> outbound AI/API calls. The Anthropic section below is retained as historical
+> documentation of the removed implementation and must not be treated as a
+> current runtime dependency.
+
+
 ## Overview
 
 This app **exposes no API of its own** (there is no backend server). It

@@ -8,14 +8,17 @@ import com.lifeos.app.data.db.entities.HabitEntity
 import com.lifeos.app.data.db.entities.NoteEntity
 import com.lifeos.app.data.db.entities.TaskEntity
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
 
 /**
- * "Your life. Your data." — complete local JSON export/import. Files stay in
- * app-private storage and are only shared/saved when the user explicitly asks.
+ * "Your life. Your data." — Section 2/19/59. A complete, human-readable JSON
+ * export of everything LifeOS stores locally, written to app-private storage
+ * so it can then be shared/saved by the user explicitly (never uploaded
+ * automatically). Restore is idempotent (upsert by primary key).
  */
 @Serializable
 data class LifeOSBackup(
@@ -52,6 +55,16 @@ class BackupRepository(
         captures = captureRepo.getAllForBackup()
     )
 
+    suspend fun exportJson(output: OutputStream, appVersion: String) {
+        output.bufferedWriter().use { it.write(json.encodeToString(buildBackup(appVersion))) }
+    }
+
+    suspend fun importJson(input: InputStream) {
+        val backup = json.decodeFromString(LifeOSBackup.serializer(), input.bufferedReader().use { it.readText() })
+        restore(backup)
+    }
+
+    /** Writes the export to app-private storage for legacy/internal callers. */
     suspend fun exportToFile(directory: File, appVersion: String): File {
         val backup = buildBackup(appVersion)
         val text = json.encodeToString(backup)
@@ -61,7 +74,7 @@ class BackupRepository(
     }
 
     suspend fun importFromFile(file: File) {
-        val backup: LifeOSBackup = json.decodeFromString(file.readText())
+        val backup = json.decodeFromString(LifeOSBackup.serializer(), file.readText())
         restore(backup)
     }
 

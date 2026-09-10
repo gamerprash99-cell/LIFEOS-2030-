@@ -17,6 +17,7 @@ import androidx.navigation.navArgument
 import com.lifeos.app.ui.ai.AiAssistantScreen
 import com.lifeos.app.ui.capture.CaptureDetailScreen
 import com.lifeos.app.ui.capture.CaptureSheet
+import com.lifeos.app.ui.capture.MorningPhotoSheet
 import com.lifeos.app.ui.components.LifeOSBottomBar
 import com.lifeos.app.ui.diary.DiaryScreen
 import com.lifeos.app.ui.expenses.ExpensesScreen
@@ -37,6 +38,7 @@ import com.lifeos.app.ui.timeline.TimelineScreen
 fun LifeOSNavHost() {
     val navController = rememberNavController()
     var showCapture by remember { mutableStateOf(false) }
+    var showMorningPhoto by remember { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = { LifeOSBottomBar(navController) }
@@ -51,6 +53,7 @@ fun LifeOSNavHost() {
                     onOpenTasks = { navController.navigate(Screen.Tasks.route) },
                     onOpenHabits = { navController.navigate(Screen.Habits.route) },
                     onOpenCapture = { showCapture = true },
+                    onOpenMorningPhoto = { showMorningPhoto = true },
                     onOpenAiAssistant = { navController.navigate(Screen.AiAssistant.route) },
                     onOpenNotes = { navController.navigate(Screen.Notes.route) },
                     onOpenExpenses = { navController.navigate(Screen.Expenses.route) },
@@ -112,5 +115,8 @@ fun LifeOSNavHost() {
 
     if (showCapture) {
         CaptureSheet(onDismiss = { showCapture = false })
+    }
+    if (showMorningPhoto) {
+        MorningPhotoSheet(onDismiss = { showMorningPhoto = false })
     }
 }

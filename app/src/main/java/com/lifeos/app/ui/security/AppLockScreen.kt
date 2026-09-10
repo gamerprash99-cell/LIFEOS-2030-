@@ -22,6 +22,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -73,7 +78,13 @@ fun AppLockScreen(lockType: AppLockType, onUnlocked: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(Icons.Filled.Lock, contentDescription = null, modifier = Modifier.padding(bottom = 16.dp))
+        val pulse = rememberInfiniteTransition(label = "lock_pulse").animateFloat(1f, 1.06f, infiniteRepeatable(tween(850), RepeatMode.Reverse), label = "lock_scale")
+        Icon(
+            if (lockType == AppLockType.BIOMETRIC) Icons.Filled.Fingerprint else Icons.Filled.Lock,
+            contentDescription = null,
+            modifier = Modifier.size((54f * pulse.value).dp).padding(bottom = 8.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
         Text("LifeOS is locked", style = MaterialTheme.typography.titleLarge)
 
         when {

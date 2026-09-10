@@ -85,6 +85,19 @@ CompositionLocalProvider(LocalServiceLocator provides serviceLocator) { ... }
 Every screen then does `val locator = LocalServiceLocator.current` to reach
 repositories, the AI layer, and settings.
 
+## Media and interaction UX
+
+- `ui/capture/CaptureDetailScreen.kt` keeps media metadata in a dedicated
+  section below the media and uses scroll/bottom insets so date/time are not
+  clipped on smaller screens.
+- `ui/capture/VideoFullscreenViewer.kt` provides landscape fullscreen playback
+  with aspect-ratio-safe rendering, a seek bar, and 10-second backward/forward
+  controls.
+- `ui/capture/MorningPhotoSheet.kt` provides the morning-photo suggestion
+  without creating a separate media storage system.
+- `ui/settings/AlarmChallengeActivity.kt` provides the full-screen daily alarm
+  challenge UI.
+
 ## Forms
 
 All forms in this app are simple Compose `AlertDialog`s with
@@ -124,11 +137,10 @@ in `NoteEditorViewModel`, `NotesViewModel.kt`), rendered as a
 
 ## API communication
 
-Only `ui/ai/AiAssistantScreen.kt`, `ui/notes/*`, `ui/diary/DiaryScreen.kt`,
-and `ui/insights/InsightsScreen.kt` talk to any external service — and they
-do so exclusively through `core/ai/AiRepository`, never calling `AiClient`
-or OkHttp directly. All other screens talk only to the local Room database
-via repositories.
+There is no external API communication in the current app. AI screens use
+`core/ai/AiRepository`, which delegates to the local
+`LifeOSIntelligenceEngine`. Feature screens otherwise reach local data through
+the existing repositories and Room.
 
 ## Reusable components
 

@@ -156,3 +156,35 @@ Full inventory of every implemented feature, with exact file paths.
 
 - **Files**: `ui/settings/SettingsScreen.kt`
 - **Status**: Implemented
+
+
+## 10. Daily Alarm
+
+**Purpose**: A local daily alarm that requires solving a fresh arithmetic
+challenge before the alarm can be dismissed.
+
+- **Files**: `core/reminders/AlarmScheduler.kt`,
+  `core/reminders/AlarmReceiver.kt`,
+  `ui/settings/AlarmChallengeActivity.kt`,
+  `ui/settings/SettingsScreen.kt`
+- **Scheduling**: Android `AlarmManager`, with daily rescheduling after the
+  alarm fires.
+- **Challenge**: A fresh addition or subtraction problem is generated for
+  each alarm instance. Operands and the answer are kept within the small
+  requested range, and the answer field is limited to two digits.
+- **Dismissal**: The alarm sound loops until the correct answer is entered;
+  Back cannot dismiss the active challenge.
+- **Network**: None.
+
+## 11. Morning Photo
+
+**Purpose**: Encourage a morning face/moment photo and place it directly into
+the existing LifeOS memory timeline.
+
+- **UI**: `ui/capture/MorningPhotoSheet.kt` and the Home integration in
+  `ui/home/HomeScreen.kt`.
+- **Storage**: Uses the existing CameraX capture flow and persists a normal
+  `CaptureEntity`, so the photo appears through the existing Timeline
+  aggregation.
+- **Permissions**: Camera permission is requested only when the user chooses
+  the morning photo action.

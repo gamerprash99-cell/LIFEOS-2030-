@@ -28,7 +28,7 @@ class AppLockManager(private val context: Context) {
 
     private companion object {
         const val KEYSTORE = "AndroidKeyStore"
-        const val KEY_ALIAS = "lifeos_biometric_lock_v1"
+        const val KEY_ALIAS = "lifeos_biometric_lock_v2"
     }
 
     fun isBiometricAvailable(): Boolean =
@@ -88,7 +88,10 @@ class AppLockManager(private val context: Context) {
     private fun createAuthenticatedCipher(): Cipher {
         val keyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
         val key = if (keyStore.containsAlias(KEY_ALIAS)) {
-            keyStore.getKey(KEY_ALIAS, null)
+            runCatching { keyStore.getKey(KEY_ALIAS, null) }.getOrElse {
+                keyStore.deleteEntry(KEY_ALIAS)
+                generateKey()
+            }
         } else {
             generateKey()
         }
@@ -113,6 +116,14 @@ class AppLockManager(private val context: Context) {
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setUserAuthenticationRequired(true)
             .setInvalidatedByBiometricEnrollment(true)
+            .apply {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                    setUserAuthenticationParameters(0, KeyProperties.AUTH_BIOMETRIC_STRONG)
+                } else {
+                    @Suppress("DEPRECATION")
+                    setUserAuthenticationValidityDurationSeconds(-1)
+                }
+            }
             .build()
 
         generator.init(spec)

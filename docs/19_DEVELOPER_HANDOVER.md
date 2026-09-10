@@ -47,7 +47,7 @@ cd LifeOS
 Full detail in docs/21_FILE_STRUCTURE.md. The one-sentence version:
 `ui/` = screens+ViewModels, `domain/` = pure business logic, `data/` =
 Room database + repositories, `core/` = cross-cutting infrastructure (DI,
-AI client, security, reminders, utilities).
+AI compatibility layer, security, reminders, utilities).
 
 ## Architecture
 
@@ -104,8 +104,8 @@ for a new developer to be aware of immediately:
 3. Database and AI API key are not encrypted at rest — treat any
    real user testing as happening on data you're comfortable being
    readable if the device/emulator storage were inspected directly
-4. Backup restore exists in code but has no UI button — don't assume
-   it's reachable by users today
+4. Full Android build/device verification remains to be performed in an
+   Android Studio environment; do not treat source-level review as a build pass
 5. Zero automated tests exist despite test frameworks being declared as dependencies
 
 ## Future work
