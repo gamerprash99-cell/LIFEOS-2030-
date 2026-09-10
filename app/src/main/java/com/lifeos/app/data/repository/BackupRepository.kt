@@ -8,6 +8,7 @@ import com.lifeos.app.data.db.entities.HabitEntity
 import com.lifeos.app.data.db.entities.NoteEntity
 import com.lifeos.app.data.db.entities.TaskEntity
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -63,7 +64,7 @@ class BackupRepository(
     }
 
     suspend fun importFromFile(file: File) {
-        val backup = json.decodeFromString(LifeOSBackup.serializer(), file.readText())
+        val backup: LifeOSBackup = json.decodeFromString(file.readText())
         restore(backup)
     }
 
