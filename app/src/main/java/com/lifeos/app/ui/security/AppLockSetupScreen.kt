@@ -1,298 +1,78 @@
 package com.lifeos.app.ui.security
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.Pin
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import com.lifeos.app.core.di.LocalServiceLocator
-import com.lifeos.app.ui.components.GlassCard
+import com.lifeos.app.ui.components.*
 import kotlinx.coroutines.launch
 
-private enum class SetupStep { CHOOSE, EXPLAIN_BIOMETRIC, CREATE_PIN, CONFIRM_PIN, RECOVERY_QUESTION, RECOVERY_ANSWER, DONE }
+private enum class SetupStep{CHOOSE,BIOMETRIC,PIN,CONFIRM_PIN,RECOVERY_QUESTION,RECOVERY_ANSWER,DONE}
+private val questions=listOf("What was the name of your first pet?","What city were you born in?","What was your childhood nickname?","What's your favorite book?","Custom question…")
 
-private val RECOVERY_QUESTION_PRESETS = listOf(
-    "What was the name of your first pet?",
-    "What city were you born in?",
-    "What was your childhood nickname?",
-    "What's your favorite book?",
-    "Custom question…"
-)
-
-/**
- * Section 3/4 of the security pass: a real setup flow with clear
- * explanations, rather than a single opaque toggle. See
- * core/util/SettingsStore.kt for how the PIN/recovery answer are hashed
- * (never stored in plaintext) and core/security/AppLockManager.kt for the
- * biometric path and its documented platform limits.
- */
 @Composable
-fun AppLockSetupScreen(onBack: () -> Unit) {
-    val locator = LocalServiceLocator.current
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val activity = context as? FragmentActivity
-
-    var step by remember { mutableStateOf(SetupStep.CHOOSE) }
-    var pin by remember { mutableStateOf("") }
-    var confirmPin by remember { mutableStateOf("") }
-    var pinError by remember { mutableStateOf<String?>(null) }
-    var recoveryQuestion by remember { mutableStateOf(RECOVERY_QUESTION_PRESETS.first()) }
-    var customQuestion by remember { mutableStateOf("") }
-    var showQuestionMenu by remember { mutableStateOf(false) }
-    var recoveryAnswer by remember { mutableStateOf("") }
-    var biometricError by remember { mutableStateOf<String?>(null) }
-
-    fun finalQuestion() = if (recoveryQuestion == "Custom question…") customQuestion else recoveryQuestion
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("App Lock") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, contentDescription = "Back") } }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            when (step) {
-                SetupStep.CHOOSE -> {
-                    Text("Choose how LifeOS should be protected", style = MaterialTheme.typography.titleLarge)
-
-                    OptionCard(
-                        icon = Icons.Filled.LockOpen,
-                        title = "No App Lock",
-                        description = "LifeOS opens immediately, like most apps. Anyone with your unlocked phone can open it.",
-                        onClick = {
-                            scope.launch { locator.settingsStore.disableAppLock() }
-                            step = SetupStep.DONE
-                        }
-                    )
-                    OptionCard(
-                        icon = Icons.Filled.Fingerprint,
-                        title = "Biometric App Lock",
-                        description = "Uses your phone's strong fingerprint/face biometric through Android's secure Keystore. LifeOS never receives biometric data; the app's cryptographic credential is invalidated if biometric enrollment changes.",
-                        onClick = { step = SetupStep.EXPLAIN_BIOMETRIC }
-                    )
-                    OptionCard(
-                        icon = Icons.Filled.Pin,
-                        title = "App PIN",
-                        description = "A separate PIN just for LifeOS, independent of your phone's own lock screen. Recommended if you share your phone or want LifeOS protected even when your phone is unlocked.",
-                        onClick = { pin = ""; confirmPin = ""; pinError = null; step = SetupStep.CREATE_PIN }
-                    )
+fun AppLockSetupScreen(onBack:()->Unit){
+    val locator=LocalServiceLocator.current;val scope=rememberCoroutineScope();val activity=LocalContext.current as? FragmentActivity
+    var step by remember{mutableStateOf(SetupStep.CHOOSE)};var pin by remember{mutableStateOf("")};var confirm by remember{mutableStateOf("")};var question by remember{mutableStateOf(questions.first())};var custom by remember{mutableStateOf("")};var answer by remember{mutableStateOf("")};var error by remember{mutableStateOf<String?>(null)};var menu by remember{mutableStateOf(false)}
+    val finalQuestion=if(question=="Custom question…")custom else question
+    Scaffold(containerColor=MaterialTheme.colorScheme.background,topBar={TopAppBar(title={Text("App Lock")},navigationIcon={IconButton(onClick=onBack){Icon(Icons.Filled.ArrowBack,"Back")}})}){padding->
+        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
+            when(step){
+                SetupStep.CHOOSE->{
+                    LifeOSSectionHeader("Protect LifeOS",supportingText="Choose one method. You can change it later.")
+                    LockOption(Icons.Filled.LockOpen,"None","No extra lock. LifeOS opens with your phone."){scope.launch{locator.settingsStore.disableAppLock();step=SetupStep.DONE}}
+                    LockOption(Icons.Filled.Fingerprint,"Biometric","Use strong fingerprint/face verification through Android. No biometric data is read by LifeOS."){step=SetupStep.BIOMETRIC}
+                    LockOption(Icons.Filled.Pin,"PIN","Use a separate 4–6 digit LifeOS PIN with secure recovery."){pin="";confirm="";error=null;step=SetupStep.PIN}
                 }
-
-                SetupStep.EXPLAIN_BIOMETRIC -> {
-                    Text("Biometric App Lock", style = MaterialTheme.typography.titleLarge)
-                    Text(
-                        "LifeOS will ask Android to verify a strong fingerprint/face biometric before opening. " +
-                            "The authentication is bound to a Keystore credential that Android invalidates if biometric enrollment changes. " +
-                            "LifeOS never receives your actual fingerprint or face data.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    biometricError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-                    Button(
-                        onClick = {
-                            val act = activity
-                            if (act == null) {
-                                biometricError = "Couldn't start biometric verification here."
-                            } else {
-                                locator.appLockManager.authenticate(
-                                    activity = act,
-                                    onSuccess = {
-                                        scope.launch { locator.settingsStore.enableBiometricLock() }
-                                        step = SetupStep.DONE
-                                    },
-                                    onError = { message -> biometricError = message }
-                                )
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("Verify and enable") }
-                    TextButton(onClick = { step = SetupStep.CHOOSE }) { Text("Back") }
+                SetupStep.BIOMETRIC->{
+                    LifeOSSectionHeader("Biometric App Lock",supportingText="Android verifies your fingerprint/face. The credential is bound to the Android Keystore.")
+                    LifeOSCard{Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){Text("Secure by design",style=MaterialTheme.typography.titleMedium);Text("LifeOS never receives or stores biometric data. A strong biometric is required and enrollment changes invalidate the cryptographic key.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}}
+                    error?.let{Text(it,color=MaterialTheme.colorScheme.error)}
+                    Button(onClick={val act=activity;if(act==null){error="Biometric verification is unavailable here."}else locator.appLockManager.authenticate(act,{scope.launch{locator.settingsStore.enableBiometricLock();step=SetupStep.DONE}},{error=it})},Modifier.fillMaxWidth()){Icon(Icons.Filled.Fingerprint,null);Spacer(Modifier.width(8.dp));Text("Verify & enable biometric")}
+                    TextButton(onClick={step=SetupStep.CHOOSE},Modifier.align(Alignment.CenterHorizontally)){Text("Back")}
                 }
-
-                SetupStep.CREATE_PIN -> {
-                    Text("Create a PIN", style = MaterialTheme.typography.titleLarge)
-                    Text("Choose a 4-6 digit PIN.", style = MaterialTheme.typography.bodyMedium)
-                    OutlinedTextField(
-                        value = pin,
-                        onValueChange = { if (it.length <= 6 && it.all(Char::isDigit)) pin = it },
-                        label = { Text("PIN") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                        visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    pinError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-                    Button(
-                        onClick = {
-                            if (pin.length < 4) {
-                                pinError = "PIN must be at least 4 digits."
-                            } else {
-                                pinError = null
-                                confirmPin = ""
-                                step = SetupStep.CONFIRM_PIN
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("Next") }
-                    TextButton(onClick = { step = SetupStep.CHOOSE }) { Text("Back") }
+                SetupStep.PIN->{
+                    LifeOSSectionHeader("Create your LifeOS PIN",supportingText="Use 4–6 digits. This is separate from your phone PIN.")
+                    OutlinedTextField(pin,{if(it.length<=6&&it.all(Char::isDigit))pin=it},Modifier.fillMaxWidth(),label={Text("New PIN")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.NumberPassword),visualTransformation=PasswordVisualTransformation(),singleLine=true)
+                    error?.let{Text(it,color=MaterialTheme.colorScheme.error)}
+                    Button(onClick={if(pin.length<4){error="PIN must be 4–6 digits."}else{error=null;step=SetupStep.CONFIRM_PIN}},Modifier.fillMaxWidth()){Text("Continue")}
+                    TextButton(onClick={step=SetupStep.CHOOSE}){Text("Back")}
                 }
-
-                SetupStep.CONFIRM_PIN -> {
-                    Text("Confirm your PIN", style = MaterialTheme.typography.titleLarge)
-                    OutlinedTextField(
-                        value = confirmPin,
-                        onValueChange = { if (it.length <= 6 && it.all(Char::isDigit)) confirmPin = it },
-                        label = { Text("Re-enter PIN") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                        visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    pinError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-                    Button(
-                        onClick = {
-                            if (confirmPin != pin) {
-                                pinError = "PINs don't match. Try again."
-                            } else {
-                                pinError = null
-                                step = SetupStep.RECOVERY_QUESTION
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("Next") }
-                    TextButton(onClick = { step = SetupStep.CREATE_PIN }) { Text("Back") }
+                SetupStep.CONFIRM_PIN->{
+                    LifeOSSectionHeader("Confirm PIN")
+                    OutlinedTextField(confirm,{if(it.length<=6&&it.all(Char::isDigit))confirm=it},Modifier.fillMaxWidth(),label={Text("Confirm PIN")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.NumberPassword),visualTransformation=PasswordVisualTransformation(),singleLine=true)
+                    error?.let{Text(it,color=MaterialTheme.colorScheme.error)}
+                    Button(onClick={if(confirm!=pin){error="PINs do not match."}else{error=null;step=SetupStep.RECOVERY_QUESTION}},Modifier.fillMaxWidth()){Text("Set recovery")}
+                    TextButton(onClick={step=SetupStep.PIN}){Text("Back")}
                 }
-
-                SetupStep.RECOVERY_QUESTION -> {
-                    Text("Set up recovery", style = MaterialTheme.typography.titleLarge)
-                    Text(
-                        "If you forget your PIN, you'll answer this question to reset it. Your answer is stored securely — LifeOS never keeps it as plain text.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Column {
-                        OutlinedButton(onClick = { showQuestionMenu = true }, modifier = Modifier.fillMaxWidth()) {
-                            Text(recoveryQuestion)
-                        }
-                        DropdownMenu(expanded = showQuestionMenu, onDismissRequest = { showQuestionMenu = false }) {
-                            RECOVERY_QUESTION_PRESETS.forEach { q ->
-                                DropdownMenuItem(text = { Text(q) }, onClick = { recoveryQuestion = q; showQuestionMenu = false })
-                            }
-                        }
-                    }
-                    if (recoveryQuestion == "Custom question…") {
-                        OutlinedTextField(
-                            value = customQuestion,
-                            onValueChange = { customQuestion = it },
-                            label = { Text("Your question") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                    Button(
-                        onClick = { if (finalQuestion().isNotBlank()) step = SetupStep.RECOVERY_ANSWER },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = finalQuestion().isNotBlank()
-                    ) { Text("Next") }
-                    TextButton(onClick = { step = SetupStep.CONFIRM_PIN }) { Text("Back") }
+                SetupStep.RECOVERY_QUESTION->{
+                    LifeOSSectionHeader("Recovery question",supportingText="Required so a forgotten PIN cannot simply disable App Lock.")
+                    Box{OutlinedButton(onClick={menu=true},Modifier.fillMaxWidth()){Text(question,Modifier.weight(1f));Icon(Icons.Filled.ArrowDropDown,null)};DropdownMenu(expanded=menu,onDismissRequest={menu=false}){questions.forEach{q->DropdownMenuItem(text={Text(q)},onClick={question=q;menu=false})}}}
+                    if(question=="Custom question…")OutlinedTextField(custom,{custom=it},Modifier.fillMaxWidth(),label={Text("Custom question")})
+                    Button(enabled=finalQuestion.isNotBlank(),onClick={step=SetupStep.RECOVERY_ANSWER},Modifier.fillMaxWidth()){Text("Continue")}
                 }
-
-                SetupStep.RECOVERY_ANSWER -> {
-                    Text("Your answer", style = MaterialTheme.typography.titleLarge)
-                    Text(finalQuestion(), style = MaterialTheme.typography.bodyMedium)
-                    OutlinedTextField(
-                        value = recoveryAnswer,
-                        onValueChange = { recoveryAnswer = it },
-                        label = { Text("Answer") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Button(
-                        onClick = {
-                            if (recoveryAnswer.isNotBlank()) {
-                                scope.launch {
-                                    locator.settingsStore.enablePinLock(pin, finalQuestion(), recoveryAnswer)
-                                }
-                                step = SetupStep.DONE
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = recoveryAnswer.isNotBlank()
-                    ) { Text("Finish setup") }
-                    TextButton(onClick = { step = SetupStep.RECOVERY_QUESTION }) { Text("Back") }
+                SetupStep.RECOVERY_ANSWER->{
+                    LifeOSSectionHeader("Recovery answer",supportingText="Store an answer you can remember. It is saved only as a salted hash.")
+                    OutlinedTextField(answer,{answer=it},Modifier.fillMaxWidth(),label={Text("Your answer")},singleLine=true)
+                    error?.let{Text(it,color=MaterialTheme.colorScheme.error)}
+                    Button(enabled=answer.isNotBlank(),onClick={scope.launch{locator.settingsStore.enablePinLock(pin,finalQuestion,answer);step=SetupStep.DONE}},Modifier.fillMaxWidth()){Text("Enable PIN App Lock")}
                 }
-
-                SetupStep.DONE -> {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(top = 40.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Text("App Lock updated", style = MaterialTheme.typography.titleLarge)
-                        Button(onClick = onBack) { Text("Done") }
-                    }
-                }
+                SetupStep.DONE->{LifeOSCard{Column(Modifier.padding(20.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(10.dp)){LifeOSIconBadge(Icons.Filled.CheckCircle);Text("App Lock updated",style=MaterialTheme.typography.headlineSmall);Text("Your protection settings are active.",style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)}};Button(onClick=onBack,Modifier.fillMaxWidth()){Text("Done")}}
             }
         }
     }
 }
 
-@Composable
-private fun OptionCard(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    onClick: () -> Unit
-) {
-    GlassCard(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
-        Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(icon, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
-                Text(title, style = MaterialTheme.typography.titleMedium)
-            }
-            Text(description, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
-            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Choose") }
-        }
-    }
-}
+@Composable private fun LockOption(icon:androidx.compose.ui.graphics.vector.ImageVector,title:String,description:String,onClick:()->Unit){LifeOSCard(onClick=onClick){Row(Modifier.fillMaxWidth().padding(18.dp),verticalAlignment=Alignment.CenterVertically){LifeOSIconBadge(icon);Spacer(Modifier.width(14.dp));Column(Modifier.weight(1f)){Text(title,style=MaterialTheme.typography.titleLarge);Text(description,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}}}}

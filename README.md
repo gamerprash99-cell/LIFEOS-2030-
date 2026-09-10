@@ -72,7 +72,7 @@ stubs.
 ```
 app/src/main/java/com/lifeos/app/
 ├── core/
-│   ├── ai/          AiClient (real Anthropic API call), AiRepository (prompt assembly), AiModels
+│   ├── ai/          Local compatibility layer, AiRepository, AiModels
 │   ├── di/           ServiceLocator — one hand-written DI container (no Hilt/KSP fragility)
 │   ├── security/      AppLockManager (BiometricPrompt)
 │   └── util/          DateTimeUtils, IdGenerator, SettingsStore (DataStore)
@@ -180,8 +180,8 @@ git push -u origin main
 ## Data & privacy principles this scaffold follows
 
 - `android:allowBackup="false"` — nothing leaves the device via OS auto-backup
-- AI calls only fire on explicit user action, and only send the specific
-  text needed for that one action (never the whole database)
+- LifeOS intelligence runs locally on-device using deterministic analysis, lexicons, rules, statistics and templates
+- No external AI API, cloud AI endpoint, or API key is required by the app
 - Backup/export is a manual, user-triggered action producing a local JSON file
 - Camera/mic permissions (declared in the manifest for future capture work)
   are requested at runtime only when that specific feature is used, never
@@ -191,44 +191,73 @@ git push -u origin main
 
 ## Development Update Log
 
-### 2026-09-10 — UI, media, habits and security upgrade
+### 2026-09-11 — LifeOS UI/UX redesign and media/security correction pass
 
-#### Changes
-- Added `VideoFullscreenViewer` for a real landscape/fullscreen video playback path.
-- Updated `VideoPreview` to preserve the 16:9 preview surface and expose fullscreen.
-- Added the shared `LifeOSDesignSystem.kt` component layer: section headers, cards, metric cards, progress, status pills, empty/loading states and completion badges.
-- Reorganized Home around the requested priority: Today → Tasks → Habits → Spending → Recent Activity → Intelligence.
-- Added a direct Recent Activity entry point to the existing Timeline navigation.
-- Added current streak, best streak, 7-day completion and 30-day completion to every Habits list row.
-- Extended `HabitAnalytics` with weekly metrics; no Room schema change was required.
-- Hardened biometric App Lock with an Android Keystore-bound AES credential, per-use authentication and biometric-enrollment invalidation.
-- Updated README and security/AI documentation to describe the current offline/local implementation and the new work.
+This pass was driven by the supplied device screenshots. The goal was not to replace LifeOS architecture, but to make the existing Compose UI feel intentional, colorful, responsive and easier to use on a real phone.
 
-#### Affected files
-- `app/src/main/java/com/lifeos/app/ui/capture/VideoFullscreenViewer.kt`
-- `app/src/main/java/com/lifeos/app/ui/capture/CaptureMediaPreview.kt`
-- `app/src/main/java/com/lifeos/app/ui/components/LifeOSDesignSystem.kt`
-- `app/src/main/java/com/lifeos/app/ui/theme/Spacing.kt`
-- `app/src/main/java/com/lifeos/app/ui/home/HomeScreen.kt`
-- `app/src/main/java/com/lifeos/app/ui/navigation/LifeOSNavHost.kt`
-- `app/src/main/java/com/lifeos/app/ui/habits/HabitsScreen.kt`
-- `app/src/main/java/com/lifeos/app/domain/model/Categories.kt`
-- `app/src/main/java/com/lifeos/app/data/repository/HabitRepository.kt`
-- `app/src/main/java/com/lifeos/app/core/security/AppLockManager.kt`
-- `app/src/main/java/com/lifeos/app/ui/security/AppLockSetupScreen.kt`
-- `README.md`
-- `docs/08_SECURITY.md`
-- `docs/11_AI_SYSTEM.md`
+#### Screen-by-screen changes
 
-#### Database
-No Room entity/table/schema version was changed. No migration was needed.
+**Global design system**
+- Restored the LifeOS violet/lavender identity instead of the previous mostly-grey presentation.
+- Added stronger Material 3 primary/secondary/container colors, lavender surfaces, clearer borders and consistent rounded cards.
+- Expanded `LifeOSDesignSystem.kt` with reusable cards, section headers, icon badges, progress bars and statistic chips.
+- Improved bottom navigation selection treatment and kept the existing five-tab navigation architecture.
+- Increased shared bottom clearance so the Capture FAB does not sit on top of the last content item.
+- Added lightweight Compose animations for progress/completion/content changes without introducing a new UI framework.
 
-#### Verification
-Static source review was performed in this environment. The supplied archive did not
-contain the Gradle wrapper JAR or a usable Android SDK, so an Android compilation was
-not claimed as passed. The next verification step remains opening the project in
-Android Studio, syncing Gradle, and compiling/running the debug build.
+**Home**
+- Reworked the dashboard into the requested hierarchy: Today → Tasks → Habits → Spending → Recent Activity → Intelligence.
+- Replaced oversized empty-looking blocks with compact information cards and progress indicators.
+- Made Tasks, Spending, Timeline and Ask LifeOS cards directly actionable.
+- Improved Habit previews so the home screen communicates today's progress rather than only showing an emoji/name tile.
 
-#### Remaining issues
-- Full end-to-end Android build and device testing still need to be performed in Android Studio.
-- Landscape fullscreen behavior should be verified on at least one portrait phone and one device/emulator with sensor rotation.
+**Habits**
+- Redesigned each habit row as a richer tracking card.
+- Shows today's progress/percentage, current streak, best streak, 7-day completion and 30-day completion directly on the list.
+- Added clearer daily progress visualization and larger touch targets.
+- Improved the Create Habit flow with selectable icons and a clearer optional reminder action.
+
+**Capture**
+- Redesigned the Capture bottom sheet with a clearer hierarchy and larger Photo/Video/Audio actions.
+- Added safe-area handling to camera/video controls so buttons stay above gesture/navigation areas.
+- Improved capture confirmation so a successful media capture remains visible before the sheet is dismissed.
+
+**Photo detail / Timeline media**
+- Fixed the layout problem where the captured photo could push the date/time metadata outside the visible screen.
+- Capture detail is now vertically scrollable and uses a dedicated metadata card below the media.
+- Date and time are kept readable and no longer depend on a fixed-height screen layout.
+
+**Video**
+- Redesigned the video preview with a clear play button, fullscreen action and 16:9 media surface.
+- Fullscreen viewer opens in landscape, keeps the source aspect ratio, provides Android playback controls and restores the previous orientation on exit.
+- Capture controls were redesigned for clearer recording state and safer bottom positioning.
+
+**Settings / App Lock**
+- Fixed the App Lock presentation so the protection method and Change/Set Up action are always visible.
+- Restored the actual setup choices: None, Biometric and PIN.
+- PIN setup retains 4–6 digit PIN confirmation and mandatory recovery-question/answer flow.
+- Biometric setup explicitly verifies the user's strong biometric before enabling the lock.
+- Existing Android Keystore-bound biometric hardening remains in place; no biometric data is stored by LifeOS.
+
+#### Data and architecture
+- No Kotlin-to-other-language migration.
+- No navigation replacement. Existing Compose Navigation remains the navigation system.
+- No Room table/entity/schema change was introduced by this UI pass.
+- No database reset, recreation or destructive migration was added.
+- Existing repositories/ViewModels/service locator remain the data path.
+- No external AI service, telemetry, Firebase, cloud database or network API was added.
+
+#### Documentation
+- `README.md` is the single development-update log for this archive.
+- `UPDATE.md` is intentionally not used.
+
+#### Verification status
+- Source-level review and UI implementation were completed against the supplied archive and screenshots.
+- This environment does not have a usable Android SDK/Gradle installation and the supplied archive does not contain the Gradle wrapper JAR, so an Android compile or device test is **not** reported as passed.
+- First real verification step: open the `LifeOS` folder in Android Studio, allow Gradle sync, then run the debug build on a physical phone/emulator.
+
+#### Remaining verification
+- Verify portrait and landscape video playback on-device.
+- Verify photo detail date/time placement on small and large phones and with larger font scale.
+- Verify PIN and biometric setup/unlock/recovery on a real Android device.
+- Run `assembleDebug`, unit tests, instrumentation tests and lint/static analysis in Android Studio/CI.

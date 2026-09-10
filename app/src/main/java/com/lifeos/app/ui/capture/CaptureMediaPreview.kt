@@ -4,201 +4,159 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.widget.MediaController
 import android.widget.VideoView
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.Fullscreen
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
-import com.lifeos.app.ui.components.GlassCard
+import com.lifeos.app.ui.components.LifeOSCard
 import kotlinx.coroutines.delay
 import java.io.File
 
-/**
- * Large photo preview using the actual captured file — the real fix for
- * "user captures a photo but gets no visible result". No placeholder/fake
- * image is ever shown; if the file is missing, that's shown honestly too.
- */
 @Composable
 fun PhotoPreview(filePath: String, modifier: Modifier = Modifier) {
-    val fileExists = remember(filePath) { File(filePath).exists() }
-    if (fileExists) {
-        AsyncImage(
-            model = filePath,
-            contentDescription = "Captured photo",
-            modifier = modifier
-                .fillMaxWidth()
-                .aspectRatio(3f / 4f)
-                .clip(RoundedCornerShape(18.dp)),
-            contentScale = androidx.compose.ui.layout.ContentScale.Crop
-        )
-    } else {
+    if (!File(filePath).exists()) {
         MissingFileNotice(modifier)
+        return
     }
+    AsyncImage(
+        model = filePath,
+        contentDescription = "Captured photo",
+        modifier = modifier.fillMaxWidth().heightIn(max = 520.dp).clip(RoundedCornerShape(24.dp)),
+        contentScale = ContentScale.Fit
+    )
 }
 
-/**
- * Video preview: shows a real extracted frame from the captured file first
- * (no autoplay), with a tap-to-play control. Once tapped, mounts a real
- * VideoView with Android's built-in MediaController (play/pause/seek).
- */
 @Composable
 fun VideoPreview(filePath: String, modifier: Modifier = Modifier) {
-    val fileExists = remember(filePath) { File(filePath).exists() }
-    if (!fileExists) {
+    if (!File(filePath).exists()) {
         MissingFileNotice(modifier)
         return
     }
-
-    var isPlaying by remember(filePath) { mutableStateOf(false) }
-    var showFullscreen by remember(filePath) { mutableStateOf(false) }
+    var playing by remember(filePath) { mutableStateOf(false) }
+    var fullscreen by remember(filePath) { mutableStateOf(false) }
     val thumbnail = rememberVideoThumbnail(filePath)
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(16f / 9f)
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color.Black),
-        contentAlignment = Alignment.Center
-    ) {
-        if (isPlaying) {
-            AndroidView(
-                modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
-                factory = { ctx ->
-                    VideoView(ctx).apply {
-                        val controller = MediaController(ctx)
-                        setMediaController(controller)
-                        controller.setAnchorView(this)
-                        setVideoURI(Uri.fromFile(File(filePath)))
-                        setOnPreparedListener { start() }
-                    }
-                }
-            )
-        } else {
-            thumbnail?.let {
-                androidx.compose.foundation.Image(
-                    bitmap = it,
-                    contentDescription = "Video preview",
-                    modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
-                    contentScale = androidx.compose.ui.layout.ContentScale.Fit
-                )
-            }
-            IconButton(
-                onClick = { isPlaying = true },
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(Color.Black.copy(alpha = 0.5f))
-            ) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = "Play video", tint = Color.White)
-            }
-        }
-
-        IconButton(
-            onClick = { showFullscreen = true },
-            modifier = Modifier.align(Alignment.TopEnd)
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Box(
+            Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(24.dp)).background(Color.Black),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Filled.Fullscreen, contentDescription = "Open fullscreen video", tint = Color.White)
+            if (playing) {
+                AndroidView(
+                    Modifier.fillMaxSize(),
+                    factory = { ctx ->
+                        VideoView(ctx).apply {
+                            val controller = MediaController(ctx)
+                            setMediaController(controller)
+                            controller.setAnchorView(this)
+                            setVideoURI(Uri.fromFile(File(filePath)))
+                            setOnPreparedListener { it.start() }
+                        }
+                    }
+                )
+            } else {
+                thumbnail?.let { Image(it, "Video preview", Modifier.fillMaxSize(), contentScale = ContentScale.Fit) }
+            }
+
+            Surface(
+                onClick = { playing = true },
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = .94f),
+                modifier = Modifier.size(64.dp)
+            ) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Icon(
+                        if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        if (playing) "Pause" else "Play",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+            }
+
+            IconButton(
+                onClick = { fullscreen = true },
+                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+            ) {
+                Surface(shape = CircleShape, color = Color.Black.copy(alpha = .55f)) {
+                    Icon(Icons.Filled.Fullscreen, "Fullscreen", tint = Color.White, modifier = Modifier.padding(8.dp))
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Videocam, null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(8.dp))
+            Text("Tap play to watch · fullscreen supports landscape", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
-
-    if (showFullscreen) {
-        VideoFullscreenViewer(filePath = filePath, onDismiss = { showFullscreen = false })
-    }
+    if (fullscreen) VideoFullscreenViewer(filePath) { fullscreen = false }
 }
 
-/**
- * Audio preview: a simple, real MediaPlayer-backed play/pause control with
- * elapsed/total duration — plays the actual recorded file.
- */
 @Composable
 fun AudioPreview(filePath: String, modifier: Modifier = Modifier) {
-    val fileExists = remember(filePath) { File(filePath).exists() }
-    if (!fileExists) {
+    if (!File(filePath).exists()) {
         MissingFileNotice(modifier)
         return
     }
-
-    var isPlaying by remember(filePath) { mutableStateOf(false) }
-    var positionMs by remember(filePath) { mutableStateOf(0L) }
-    val durationMs = rememberMediaDurationMs(filePath)
-    var mediaPlayer by remember(filePath) { mutableStateOf<MediaPlayer?>(null) }
+    var playing by remember(filePath) { mutableStateOf(false) }
+    var position by remember(filePath) { mutableStateOf(0L) }
+    var player by remember(filePath) { mutableStateOf<MediaPlayer?>(null) }
+    val duration = rememberMediaDurationMs(filePath)
 
     DisposableEffect(filePath) {
         onDispose {
-            mediaPlayer?.release()
-            mediaPlayer = null
+            player?.release()
+            player = null
         }
     }
-
-    LaunchedEffect(isPlaying) {
-        while (isPlaying) {
-            positionMs = mediaPlayer?.let { if (it.isPlaying) it.currentPosition.toLong() else positionMs } ?: positionMs
+    LaunchedEffect(playing) {
+        while (playing) {
+            position = player?.currentPosition?.toLong() ?: position
             delay(250)
         }
     }
 
-    GlassCard(modifier = modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    LifeOSCard(modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().padding(2.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = {
-                if (isPlaying) {
-                    mediaPlayer?.pause()
-                    isPlaying = false
+                if (playing) {
+                    player?.pause()
+                    playing = false
                 } else {
-                    val player = mediaPlayer ?: MediaPlayer().apply {
+                    val p = player ?: MediaPlayer().apply {
                         setDataSource(filePath)
                         prepare()
-                        setOnCompletionListener {
-                            isPlaying = false
-                            positionMs = 0L
-                            seekTo(0)
+                        setOnCompletionListener { mp ->
+                            playing = false
+                            position = 0L
+                            mp.seekTo(0)
                         }
-                    }.also { mediaPlayer = it }
-                    player.start()
-                    isPlaying = true
+                    }.also { player = it }
+                    p.start()
+                    playing = true
                 }
             }) {
-                Icon(
-                    if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = if (isPlaying) "Pause" else "Play recording"
-                )
+                Icon(if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow, if (playing) "Pause" else "Play")
             }
-            androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
-                val total = durationMs ?: 0L
+            Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
+                Text("Audio recording", style = MaterialTheme.typography.titleMedium)
                 LinearProgressIndicator(
-                    progress = { if (total > 0) (positionMs.toFloat() / total).coerceIn(0f, 1f) else 0f },
-                    modifier = Modifier.fillMaxWidth()
+                    progress = { if ((duration ?: 0L) > 0) position.toFloat() / (duration ?: 1L) else 0f },
+                    modifier = Modifier.fillMaxWidth().padding(top = 7.dp).height(6.dp)
                 )
-                Text(
-                    "${formatDurationMs(positionMs)} / ${formatDurationMs(durationMs)}",
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+                Text("${formatDurationMs(position)} / ${formatDurationMs(duration)}", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 5.dp))
             }
         }
     }
@@ -206,10 +164,7 @@ fun AudioPreview(filePath: String, modifier: Modifier = Modifier) {
 
 @Composable
 private fun MissingFileNotice(modifier: Modifier = Modifier) {
-    GlassCard(modifier = modifier.fillMaxWidth()) {
-        Text(
-            "This file could not be found on the device. It may have been removed outside the app.",
-            style = MaterialTheme.typography.bodySmall
-        )
+    LifeOSCard(modifier.fillMaxWidth()) {
+        Text("This media file is no longer available on this device.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(18.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
