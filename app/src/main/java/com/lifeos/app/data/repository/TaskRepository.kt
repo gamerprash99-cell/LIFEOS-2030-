@@ -18,6 +18,7 @@ class TaskRepository(private val dao: TaskDao, private val appContext: Context) 
     fun observeCompletedCountForDay(epochDay: Long): Flow<Int> = dao.observeCompletedCountForDay(epochDay)
 
     suspend fun getById(id: String): TaskEntity? = dao.getById(id)
+    suspend fun getCreatedBetween(startMillis: Long, endMillis: Long): List<TaskEntity> = dao.getCreatedBetween(startMillis, endMillis)
 
     suspend fun createTask(
         title: String,
@@ -58,23 +59,13 @@ class TaskRepository(private val dao: TaskDao, private val appContext: Context) 
         return id
     }
 
-    /**
-     * Bulk-approve AI-extracted tasks (Section 8/10). Every task created here
-     * originates from an explicit user tap on [CREATE TASKS] — never silent,
-     * per Rule #9 ("AI-generated tasks must be reviewable").
-     */
     suspend fun createFromAiExtraction(
         titles: List<String>,
         dueDateEpochDay: Long?,
         sourceType: String,
         sourceId: String
     ): List<String> = titles.map { title ->
-        createTask(
-            title = title,
-            dueDateEpochDay = dueDateEpochDay,
-            sourceType = sourceType,
-            sourceId = sourceId
-        )
+        createTask(title = title, dueDateEpochDay = dueDateEpochDay, sourceType = sourceType, sourceId = sourceId)
     }
 
     suspend fun setCompleted(id: String, completed: Boolean) {
@@ -83,8 +74,6 @@ class TaskRepository(private val dao: TaskDao, private val appContext: Context) 
     }
 
     suspend fun reschedule(id: String, newEpochDay: Long) = dao.reschedule(id, newEpochDay, System.currentTimeMillis())
-
-    /** Keep for tomorrow — Section 10 "TASK NOT COMPLETED" flow shortcut. */
     suspend fun keepForTomorrow(id: String, todayEpochDay: Long) = reschedule(id, todayEpochDay + 1)
 
     suspend fun delete(id: String) {
@@ -97,9 +86,7 @@ class TaskRepository(private val dao: TaskDao, private val appContext: Context) 
         return dao.search(query)
     }
 
-    suspend fun countCompletedBetween(startMillis: Long, endMillis: Long): Int =
-        dao.countCompletedBetween(startMillis, endMillis)
-
+    suspend fun countCompletedBetween(startMillis: Long, endMillis: Long): Int = dao.countCompletedBetween(startMillis, endMillis)
     suspend fun getAllForBackup(): List<TaskEntity> = dao.getAllForBackup()
     suspend fun restoreFromBackup(tasks: List<TaskEntity>) = tasks.forEach { dao.upsert(it) }
 }
