@@ -5,6 +5,7 @@ import com.lifeos.app.data.db.dao.NoteDao
 import com.lifeos.app.data.db.entities.NoteEntity
 import com.lifeos.app.domain.model.NoteBlock
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -35,7 +36,7 @@ class NoteRepository(private val dao: NoteDao) {
     suspend fun restoreFromTrash(id: String) = dao.setDeleted(id,false,System.currentTimeMillis())
     suspend fun permanentlyDelete(id: String) = dao.hardDelete(id)
     suspend fun search(query: String): List<NoteEntity> { if(query.isBlank()) return emptyList(); return dao.search(query) }
-    fun decodeBlocks(note: NoteEntity): List<NoteBlock> = try { json.decodeFromString(kotlinx.serialization.builtins.ListSerializer(NoteBlock.serializer()),note.contentJson) } catch(_: Exception){ emptyList() }
+    fun decodeBlocks(note: NoteEntity): List<NoteBlock> = try { json.decodeFromString(ListSerializer(NoteBlock.serializer()),note.contentJson) } catch(_: Exception){ emptyList() }
     private fun flattenBlocks(blocks: List<NoteBlock>): String = blocks.joinToString(" "){block->when(block){is NoteBlock.Paragraph->block.text;is NoteBlock.Heading->block.text;is NoteBlock.BulletItem->block.text;is NoteBlock.NumberedItem->block.text;is NoteBlock.ChecklistItem->block.text}}
     suspend fun getCreatedBetween(startMillis: Long, endMillis: Long): List<NoteEntity> = dao.getCreatedBetween(startMillis,endMillis)
     suspend fun getAllForBackup(): List<NoteEntity> = dao.getAllForBackup()
