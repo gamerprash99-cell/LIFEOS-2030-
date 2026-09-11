@@ -24,6 +24,31 @@ to do to verify it.
 
 ---
 
+## 2026-09-11 — Timeline, App Lock setup and Home alarm UX pass
+
+This pass is intentionally scoped to the requested Timeline/App Lock/alarm
+experience. The existing Kotlin + Compose + Room architecture and LifeOS
+violet/lavender theme are preserved.
+
+- Timeline now has a compact Life Timeline header, selected-day strip,
+  scrollable memory filters, chronological rail, richer cards and large
+  capture previews while keeping date/time visible.
+- Timeline capture cards remain connected to the existing capture repository;
+  tapping a photo/video moment still opens the existing Capture Detail flow.
+- Biometric App Lock setup now detects when no strong biometric is enrolled
+  and opens Android's native biometric enrollment UI. After enrollment,
+  LifeOS verifies through `BiometricPrompt` before enabling the lock.
+- Existing biometric Keystore credentials are safely regenerated when Android
+  invalidates them after biometric enrollment changes.
+- The alarm is surfaced directly on Home with an animated status card, daily
+  time control and details shortcut. The existing scheduler and DataStore
+  settings remain the source of truth.
+- Alarm challenges now use two answer choices. A wrong choice immediately
+  generates a new +/− problem, and the alarm continues until the correct
+  answer is selected.
+
+---
+
 ## What's implemented (Phases 1–6 of the spec)
 
 | Area | Status |

@@ -1,5 +1,27 @@
 # 17 — Changelog
 
+## 2026-09-11 — Timeline, App Lock setup and Home alarm UX pass
+
+### Changed
+- Refined the Timeline screen to match the supplied visual reference:
+  date strip, memory filters, timeline rail, richer cards and full-width
+  capture previews, without changing the existing LifeOS color palette.
+- Added the daily alarm card directly to Home with animated enabled state,
+  time control and a Settings details shortcut.
+- Changed the alarm challenge from typed input to two-choice answers while
+  preserving the existing rule that the alarm keeps sounding until solved.
+
+### Fixed
+- Added a native Android biometric-enrollment path when a strong biometric
+  is not enrolled, plus a check-again flow before enabling App Lock.
+- Hardened the biometric Keystore path so an invalidated local credential is
+  replaced safely after biometric enrollment changes.
+
+### Architecture / Data
+- No Room schema, repository, use case, navigation architecture or external
+  service was introduced or replaced.
+
+
 ## 2026-09-11 — UI/UX, navigation, backup, alarm and capture pass
 
 ### Fixed

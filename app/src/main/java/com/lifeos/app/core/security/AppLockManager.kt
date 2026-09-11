@@ -87,20 +87,24 @@ class AppLockManager(private val context: Context) {
 
     private fun createAuthenticatedCipher(): Cipher {
         val keyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
-        val key = if (keyStore.containsAlias(KEY_ALIAS)) {
-            runCatching { keyStore.getKey(KEY_ALIAS, null) }.getOrElse {
-                keyStore.deleteEntry(KEY_ALIAS)
-                generateKey()
+
+        fun newCipher(key: java.security.Key): Cipher =
+            Cipher.getInstance("${KeyProperties.KEY_ALGORITHM_AES}/GCM/NoPadding").apply {
+                init(Cipher.ENCRYPT_MODE, key)
             }
-        } else {
-            generateKey()
+
+        val existingKey = if (keyStore.containsAlias(KEY_ALIAS)) {
+            runCatching { keyStore.getKey(KEY_ALIAS, null) }.getOrNull()
+        } else null
+
+        existingKey?.let { key ->
+            runCatching { newCipher(key) }.getOrNull()?.let { return it }
         }
 
-        return Cipher.getInstance(
-            "${KeyProperties.KEY_ALGORITHM_AES}/GCM/NoPadding"
-        ).apply {
-            init(Cipher.ENCRYPT_MODE, key)
-        }
+        // A biometric enrollment change can invalidate the old key. Replace
+        // only that local Keystore entry; no user data is touched.
+        runCatching { keyStore.deleteEntry(KEY_ALIAS) }
+        return newCipher(generateKey())
     }
 
     private fun generateKey(): java.security.Key {

@@ -1,5 +1,9 @@
 package com.lifeos.app.ui.security
 
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import androidx.biometric.BiometricManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,14 +61,15 @@ fun AppLockScreen(lockType: AppLockType, onUnlocked: () -> Unit) {
 
     var pinInput by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var biometricReady by remember { mutableStateOf(activity?.let { locator.appLockManager.isBiometricAvailable() } == true) }
     var recoveryStep by remember { mutableStateOf(RecoveryStep.NONE) }
     var recoveryAnswerInput by remember { mutableStateOf("") }
     var recoveryQuestionText by remember { mutableStateOf<String?>(null) }
     var newPin by remember { mutableStateOf("") }
     var newPinConfirm by remember { mutableStateOf("") }
 
-    LaunchedEffect(lockType) {
-        if (lockType == AppLockType.BIOMETRIC && activity != null) {
+    LaunchedEffect(lockType, biometricReady) {
+        if (lockType == AppLockType.BIOMETRIC && biometricReady && activity != null) {
             locator.appLockManager.authenticate(
                 activity = activity,
                 onSuccess = onUnlocked,
@@ -208,21 +213,57 @@ fun AppLockScreen(lockType: AppLockType, onUnlocked: () -> Unit) {
 
             lockType == AppLockType.BIOMETRIC -> {
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 12.dp)) }
-                Button(
-                    onClick = {
-                        val act = activity
-                        if (act != null) {
-                            locator.appLockManager.authenticate(
-                                activity = act,
-                                onSuccess = onUnlocked,
-                                onError = { message -> error = message }
-                            )
+                if (!biometricReady) {
+                    Text(
+                        "No strong biometric is enrolled on this phone yet.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 12.dp)
+                    )
+                    Button(
+                        onClick = {
+                            activity?.let { act ->
+                                val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                    Intent(Settings.ACTION_BIOMETRIC_ENROLL).apply {
+                                        putExtra(
+                                            Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED,
+                                            BiometricManager.Authenticators.BIOMETRIC_STRONG
+                                        )
+                                    }
+                                } else Intent(Settings.ACTION_SECURITY_SETTINGS)
+                                act.startActivity(intent)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+                    ) {
+                        Icon(Icons.Filled.Fingerprint, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Set up fingerprint / face")
+                    }
+                    TextButton(
+                        onClick = {
+                            biometricReady = activity?.let { locator.appLockManager.isBiometricAvailable() } == true
+                            if (!biometricReady) error = "Finish biometric setup on your phone, then try again."
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-                ) {
-                    Icon(Icons.Filled.Fingerprint, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
-                    Text("Unlock")
+                    ) { Text("Check again") }
+                } else {
+                    Button(
+                        onClick = {
+                            val act = activity
+                            if (act != null) {
+                                locator.appLockManager.authenticate(
+                                    activity = act,
+                                    onSuccess = onUnlocked,
+                                    onError = { message -> error = message }
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+                    ) {
+                        Icon(Icons.Filled.Fingerprint, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Unlock with biometrics")
+                    }
                 }
             }
         }

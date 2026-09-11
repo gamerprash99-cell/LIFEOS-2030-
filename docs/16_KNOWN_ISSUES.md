@@ -2,6 +2,14 @@
 
 ---
 
+### 2026-09-11 verification note — biometric setup path
+
+The current implementation now includes an explicit Android biometric
+enrollment path and a Keystore-key regeneration path for invalidated
+credentials. The platform limitation described in Issue #13 still applies:
+BiometricPrompt authenticates against device-enrolled biometrics. This note
+does not change that Android platform behavior.
+
 ### Issue #1 — Missing Gradle wrapper scripts
 
 - **Severity**: 🟠 High (blocks command-line builds)

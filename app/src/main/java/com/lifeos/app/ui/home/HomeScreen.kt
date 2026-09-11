@@ -2,6 +2,7 @@ package com.lifeos.app.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -19,7 +21,13 @@ import com.lifeos.app.ui.components.*
 import com.lifeos.app.ui.theme.LifeOSSpacing
 import com.lifeos.app.core.util.DateTimeUtils
 import com.lifeos.app.data.db.entities.CaptureType
+import kotlinx.coroutines.launch
+import com.lifeos.app.core.reminders.AlarmScheduler
+import com.lifeos.app.core.util.rememberPermissionState
+import android.os.Build
+import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onOpenTasks: () -> Unit,
@@ -32,7 +40,8 @@ fun HomeScreen(
     onOpenInsights: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
     onOpenTimeline: () -> Unit = {},
-    onOpenMorningPhoto: () -> Unit = {}
+    onOpenMorningPhoto: () -> Unit = {},
+    onOpenSettings: () -> Unit = {}
 ) {
     val locator = LocalServiceLocator.current
     val viewModel: HomeViewModel = viewModel(factory = LambdaViewModelFactory { HomeViewModel(locator.getHomeSummaryUseCase, locator.taskRepository, locator.habitRepository) })
@@ -71,6 +80,9 @@ fun HomeScreen(
             }
             if (!morningPhotoDone) {
                 item { MorningCheckInCard(onClick = onOpenMorningPhoto) }
+            }
+            item {
+                HomeAlarmCard(onOpenSettings = onOpenSettings)
             }
             item {
                 LifeOSSectionHeader("Tasks", action = { LifeOSStatusPill("View all", onClick = onOpenTasks) })
@@ -185,5 +197,115 @@ private fun MorningCheckInCard(onClick: () -> Unit) {
             }
             Icon(Icons.Filled.CameraAlt, null, tint = MaterialTheme.colorScheme.primary)
         }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HomeAlarmCard(onOpenSettings: () -> Unit) {
+    val locator = LocalServiceLocator.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val enabled by locator.settingsStore.alarmEnabled.collectAsState(initial = false)
+    val hour by locator.settingsStore.alarmHour.collectAsState(initial = 6)
+    val minute by locator.settingsStore.alarmMinute.collectAsState(initial = 0)
+    var showTimePicker by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val notificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS)
+    } else null
+
+    val iconScale by animateFloatAsState(
+        targetValue = if (enabled) 1.06f else 1f,
+        label = "home_alarm_icon"
+    )
+
+    LifeOSCard(modifier = Modifier.animateContentSize()) {
+        Column(
+            Modifier.fillMaxWidth().padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                LifeOSIconBadge(
+                    Icons.Filled.Alarm,
+                    Modifier.graphicsLayer {
+                        scaleX = iconScale
+                        scaleY = iconScale
+                    }
+                )
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Morning alarm", style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        if (enabled) "Daily math challenge · ${String.format(Locale.getDefault(), "%02d:%02d", hour, minute)}"
+                        else "Wake up with a fresh + / − challenge",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = enabled,
+                    onCheckedChange = { checked ->
+                        if (checked && notificationPermission != null && !notificationPermission.isGranted) {
+                            notificationPermission.request()
+                        }
+                        scope.launch {
+                            locator.settingsStore.setAlarm(checked, hour, minute)
+                            if (checked) AlarmScheduler.scheduleDaily(context, hour, minute)
+                            else AlarmScheduler.cancel(context)
+                        }
+                    }
+                )
+            }
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                FilledTonalButton(
+                    onClick = { showTimePicker = true },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Filled.Schedule, null)
+                    Spacer(Modifier.width(7.dp))
+                    Text(String.format(Locale.getDefault(), "%02d:%02d daily", hour, minute))
+                }
+                OutlinedButton(
+                    onClick = onOpenSettings,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Filled.Tune, null)
+                    Spacer(Modifier.width(7.dp))
+                    Text("Details")
+                }
+            }
+
+            AnimatedVisibility(visible = enabled) {
+                Text(
+                    "Every ring gets a new question. The alarm keeps sounding until the correct answer is chosen.",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+
+    if (showTimePicker) {
+        val state = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = true)
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = { Text("Set morning alarm") },
+            text = { TimePicker(state = state) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showTimePicker = false
+                    scope.launch {
+                        locator.settingsStore.setAlarm(true, state.hour, state.minute)
+                        AlarmScheduler.scheduleDaily(context, state.hour, state.minute)
+                    }
+                }) { Text("Set alarm") }
+            },
+            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancel") } }
+        )
     }
 }

@@ -1,5 +1,9 @@
 package com.lifeos.app.ui.security
 
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import androidx.biometric.BiometricManager
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -30,6 +34,7 @@ private val questions=listOf("What was the name of your first pet?","What city w
 @Composable
 fun AppLockSetupScreen(onBack:()->Unit){
     val locator=LocalServiceLocator.current;val scope=rememberCoroutineScope();val activity=LocalContext.current as? FragmentActivity
+    var biometricReady by remember { mutableStateOf(activity?.let { locator.appLockManager.isBiometricAvailable() } == true) }
     var step by remember{mutableStateOf(SetupStep.CHOOSE)};var pin by remember{mutableStateOf("")};var confirm by remember{mutableStateOf("")};var question by remember{mutableStateOf(questions.first())};var custom by remember{mutableStateOf("")};var answer by remember{mutableStateOf("")};var error by remember{mutableStateOf<String?>(null)};var menu by remember{mutableStateOf(false)}
     val finalQuestion=if(question=="Custom question…")custom else question
     Scaffold(containerColor=MaterialTheme.colorScheme.background,topBar={TopAppBar(title={Text("App Lock")},navigationIcon={IconButton(onClick=onBack){Icon(Icons.Filled.ArrowBack,"Back")}})}){padding->
@@ -42,12 +47,82 @@ fun AppLockSetupScreen(onBack:()->Unit){
                     LockOption(Icons.Filled.Pin,"PIN","Use a separate 4–6 digit LifeOS PIN with secure recovery."){pin="";confirm="";error=null;step=SetupStep.PIN}
                 }
                 SetupStep.BIOMETRIC->{
-                    LifeOSSectionHeader("Biometric App Lock",supportingText="Android verifies your fingerprint/face. The credential is bound to the Android Keystore.")
+                    LifeOSSectionHeader("Biometric App Lock",supportingText="Use Android's own fingerprint/face setup, then verify it here. LifeOS never reads or stores biometric data.")
                     val pulse = rememberInfiniteTransition(label = "biometric_pulse").animateFloat(1f, 1.08f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "biometric_scale")
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { LifeOSIconBadge(Icons.Filled.Fingerprint, Modifier.size((82f * pulse.value).dp)) }
-                    LifeOSCard{Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){Text("Secure by design",style=MaterialTheme.typography.titleMedium);Text("LifeOS never receives or stores biometric data. A strong biometric is required and enrollment changes invalidate the cryptographic key.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}}
+                    LifeOSCard {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(
+                                if (biometricReady) "Biometric is ready" else "Set up fingerprint or face first",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                if (biometricReady)
+                                    "Android has a strong biometric enrolled. Tap verify and the standard Android biometric prompt will appear."
+                                else
+                                    "If your phone has no strong biometric enrolled yet, Android will open its secure biometric setup screen. Finish that setup, return here, then tap Check again.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                     error?.let{Text(it,color=MaterialTheme.colorScheme.error)}
-                    Button(onClick={val act=activity;if(act==null){error="Biometric verification is unavailable here."}else locator.appLockManager.authenticate(act,{scope.launch{locator.settingsStore.enableBiometricLock();step=SetupStep.DONE}},{error=it})},Modifier.fillMaxWidth()){Icon(Icons.Filled.Fingerprint,null);Spacer(Modifier.width(8.dp));Text("Verify & enable biometric")}
+                    if (!biometricReady) {
+                        Button(
+                            onClick = {
+                                val act = activity
+                                if (act == null) error = "Biometric setup is unavailable here."
+                                else {
+                                    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                        Intent(Settings.ACTION_BIOMETRIC_ENROLL).apply {
+                                            putExtra(
+                                                Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED,
+                                                BiometricManager.Authenticators.BIOMETRIC_STRONG
+                                            )
+                                        }
+                                    } else {
+                                        Intent(Settings.ACTION_SECURITY_SETTINGS)
+                                    }
+                                    act.startActivity(intent)
+                                }
+                            },
+                            Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Filled.Fingerprint, null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Set up fingerprint / face")
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                biometricReady = activity?.let { locator.appLockManager.isBiometricAvailable() } == true
+                                if (!biometricReady) error = "No strong biometric is enrolled yet."
+                                else error = null
+                            },
+                            Modifier.fillMaxWidth()
+                        ) { Text("Check again") }
+                    } else {
+                        Button(
+                            onClick = {
+                                val act = activity
+                                if (act == null) error = "Biometric verification is unavailable here."
+                                else locator.appLockManager.authenticate(
+                                    act,
+                                    {
+                                        scope.launch {
+                                            locator.settingsStore.enableBiometricLock()
+                                            step = SetupStep.DONE
+                                        }
+                                    },
+                                    { error = it }
+                                )
+                            },
+                            Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Filled.Fingerprint, null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Verify & enable biometric")
+                        }
+                    }
                     TextButton(onClick={step=SetupStep.CHOOSE},Modifier.align(Alignment.CenterHorizontally)){Text("Back")}
                 }
                 SetupStep.PIN->{
