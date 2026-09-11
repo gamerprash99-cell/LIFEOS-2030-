@@ -1,3 +1,5 @@
+> **CURRENT FLOW — 2026-09-11:** User input → Compose screen/ViewModel → existing use case/repository → Room/DataStore/local files. Intelligence is `LifeOSIntelligenceEngine` on-device. There is no outbound Anthropic/API flow in the current build.
+
 # 25 — Data Flow
 
 > **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.

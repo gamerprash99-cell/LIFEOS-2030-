@@ -1,3 +1,5 @@
+> **CURRENT VERIFIED STATUS — 2026-09-11:** LifeOS AI is an offline local Intelligence Engine. No API key, HTTP client, cloud endpoint or external model is required by the app.
+
 # 11 — AI System (Rewritten: LifeOS Intelligence Engine, Fully Offline)
 
 > **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.

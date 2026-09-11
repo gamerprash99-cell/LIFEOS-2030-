@@ -1,6 +1,5 @@
 package com.lifeos.app.ui.capture
 
-import android.content.Intent
 import android.media.MediaPlayer
 import android.widget.VideoView
 import androidx.compose.foundation.Image
@@ -39,13 +38,13 @@ fun PhotoPreview(filePath: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun VideoPreview(filePath: String, modifier: Modifier = Modifier) {
-    val context = androidx.compose.ui.platform.LocalContext.current
     if (!File(filePath).exists()) {
         MissingFileNotice(modifier)
         return
     }
     var playing by remember(filePath) { mutableStateOf(false) }
     var fullscreen by remember(filePath) { mutableStateOf(false) }
+    var player by remember(filePath) { mutableStateOf<VideoView?>(null) }
     val thumbnail = rememberVideoThumbnail(filePath)
 
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -53,22 +52,28 @@ fun VideoPreview(filePath: String, modifier: Modifier = Modifier) {
             Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(24.dp)).background(Color.Black),
             contentAlignment = Alignment.Center
         ) {
-            if (playing) {
-                AndroidView(
-                    Modifier.fillMaxSize(),
-                    factory = { ctx ->
-                        VideoView(ctx).apply {
-                            setVideoPath(filePath)
-                            setOnPreparedListener { it.start() }
-                        }
+            AndroidView(
+                Modifier.fillMaxSize(),
+                factory = { ctx ->
+                    VideoView(ctx).apply {
+                        setVideoPath(filePath)
+                        setOnPreparedListener { media -> media.pause(); playing = false }
+                        setOnCompletionListener { playing = false }
+                        player = this
                     }
-                )
-            } else {
+                },
+                update = { player = it }
+            )
+            if (!playing) {
                 thumbnail?.let { Image(it, "Video preview", Modifier.fillMaxSize(), contentScale = ContentScale.Fit) }
             }
 
             Surface(
-                onClick = { playing = true },
+                onClick = {
+                    player?.let { video ->
+                        if (video.isPlaying) { video.pause(); playing = false } else { video.start(); playing = true }
+                    } ?: run { playing = true }
+                },
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primary.copy(alpha = .94f),
                 modifier = Modifier.size(64.dp)
@@ -76,7 +81,7 @@ fun VideoPreview(filePath: String, modifier: Modifier = Modifier) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Icon(
                         if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        if (playing) "Pause" else "Play",
+                        if (playing) "Pause video" else "Play video",
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(30.dp)
                     )
@@ -99,10 +104,7 @@ fun VideoPreview(filePath: String, modifier: Modifier = Modifier) {
         }
     }
     if (fullscreen) {
-        LaunchedEffect(filePath) {
-            context.startActivity(Intent(context, VideoFullscreenActivity::class.java).putExtra(VideoFullscreenActivity.EXTRA_PATH, filePath))
-            fullscreen = false
-        }
+        VideoFullscreenViewer(filePath = filePath, onDismiss = { fullscreen = false })
     }
 }
 

@@ -164,3 +164,7 @@ for common LifeOS surfaces. It provides reusable section headers, cards, metric
 cards, progress indicators, status pills, empty/loading states and completion
 badges. Existing navigation, ViewModels, repositories and feature screens remain
 the integration boundary; the library does not introduce a new UI framework.
+
+## Current UI baseline — 2026-09-11
+
+The shared UI system now uses purple/violet tokens, 8dp spacing, 20dp screen padding, 16/20/28dp control/card radii, safe-area-aware scrolling, reusable glass/gradient surfaces and intentional motion. Home uses sticky section headers; Timeline media keeps date/time visible; video fullscreen is in-app landscape playback; App Lock and backup remain native Android flows.

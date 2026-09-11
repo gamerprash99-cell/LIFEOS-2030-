@@ -154,19 +154,18 @@ private fun AnswerOption(value: Int, selected: Boolean, onClick: () -> Unit, mod
 }
 
 private fun newProblem(): MathProblem {
-    repeat(30) {
-        val add = Random.nextBoolean()
-        return if (add) {
-            val a = Random.nextInt(1, 50)
-            val b = Random.nextInt(1, 99 - a)
-            MathProblem(a, b, true)
-        } else {
-            val a = Random.nextInt(2, 99)
-            val b = Random.nextInt(1, a)
-            MathProblem(a, b, false)
-        }
+    val add = Random.nextBoolean()
+    return if (add) {
+        // Keep every result below 99.
+        val a = Random.nextInt(1, 50)
+        val b = Random.nextInt(1, 99 - a)
+        MathProblem(a, b, true)
+    } else {
+        // Keep subtraction non-negative and below 99.
+        val a = Random.nextInt(2, 99)
+        val b = Random.nextInt(1, a)
+        MathProblem(a, b, false)
     }
-    return MathProblem(12, 7, false)
 }
 
 private fun buildOptions(problem: MathProblem): List<Int> {

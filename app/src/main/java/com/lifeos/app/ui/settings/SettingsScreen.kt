@@ -35,10 +35,12 @@ import kotlinx.coroutines.launch
 class SettingsViewModel(private val settingsStore: SettingsStore, private val backupRepository: BackupRepository) : ViewModel() {
     val appLockType = settingsStore.appLockType
     val aiFeaturesEnabled = settingsStore.aiFeaturesEnabled
+    val darkThemeEnabled = settingsStore.darkThemeEnabled
     private val _status = MutableStateFlow<String?>(null)
     val status: StateFlow<String?> = _status
 
     fun setAiFeaturesEnabled(enabled: Boolean) = viewModelScope.launch { settingsStore.setAiFeaturesEnabled(enabled) }
+    fun setDarkThemeEnabled(enabled: Boolean) = viewModelScope.launch { settingsStore.setDarkThemeEnabled(enabled) }
 
     fun exportBackup(context: Context, uri: android.net.Uri) = viewModelScope.launch {
         runCatching { context.contentResolver.openOutputStream(uri)?.use { backupRepository.exportJson(it, BuildConfig.VERSION_NAME) } ?: error("Storage location could not be opened") }
@@ -61,6 +63,7 @@ fun SettingsScreen(onOpenAppLockSetup: () -> Unit) {
     val vm: SettingsViewModel = viewModel(factory = LambdaViewModelFactory { SettingsViewModel(locator.settingsStore, locator.backupRepository) })
     val lock by vm.appLockType.collectAsState(initial = AppLockType.NONE)
     val ai by vm.aiFeaturesEnabled.collectAsState(initial = false)
+    val darkTheme by vm.darkThemeEnabled.collectAsState(initial = false)
     val status by vm.status.collectAsState()
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let { vm.exportBackup(context, it) } }
@@ -96,6 +99,20 @@ fun SettingsScreen(onOpenAppLockSetup: () -> Unit) {
             MorningPhotoInfoCard()
 
             RemindersCard()
+
+            LifeOSSectionHeader("Appearance", supportingText = "Purple and violet are always part of LifeOS")
+            LifeOSCard {
+                Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                    LifeOSIconBadge(Icons.Filled.DarkMode)
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("Dark LifeOS", style = MaterialTheme.typography.titleLarge)
+                        Text("Use the deeper violet night surface", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(checked = darkTheme, onCheckedChange = vm::setDarkThemeEnabled)
+                }
+            }
+
             LifeOSSectionHeader("Intelligence", supportingText = "Everything runs locally on this device")
             LifeOSCard {
                 Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

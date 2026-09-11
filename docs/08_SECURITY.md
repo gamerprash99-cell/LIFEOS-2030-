@@ -199,3 +199,10 @@ generic authentication callback.
 LifeOS still never stores or receives biometric templates. PIN/recovery
 verification remains separate and continues to use the existing hashed
 storage path.
+
+## Current UI/security verification — 2026-09-11
+
+- App Lock options remain None, Biometric and PIN with recovery.
+- Biometric verification is delegated to Android `BiometricPrompt`; LifeOS does not read/store biometric material.
+- Backup/restore uses Android document picker APIs so the user chooses the local file location.
+- No `INTERNET` permission is declared.

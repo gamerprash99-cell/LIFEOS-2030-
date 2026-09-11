@@ -4,20 +4,20 @@ import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val LightColors = lightColorScheme(
     primary = LifeOSPrimary,
-    onPrimary = androidx.compose.ui.graphics.Color.White,
+    onPrimary = Color.White,
     primaryContainer = LifeOSLavender,
-    onPrimaryContainer = ColorCompat.Dark,
+    onPrimaryContainer = LifeOSPrimaryDeep,
     secondary = LifeOSSecondary,
+    onSecondary = Color.White,
     tertiary = LifeOSTertiary,
     background = LifeOSBackgroundLight,
     surface = LifeOSSurfaceLight,
@@ -26,25 +26,28 @@ private val LightColors = lightColorScheme(
     onSurface = LifeOSTextPrimaryLight,
     onSurfaceVariant = LifeOSTextSecondaryLight,
     error = LifeOSDanger,
+    outline = Color(0xFFD9C9EA),
 )
 
 private val DarkColors = darkColorScheme(
-    primary = ColorCompat.Lavender,
-    onPrimary = ColorCompat.Dark,
-    primaryContainer = LifeOSPrimaryVariant,
-    onPrimaryContainer = ColorCompat.Lavender,
-    secondary = ColorCompat.Pink,
-    tertiary = ColorCompat.Lavender,
+    primary = LifeOSPrimaryBright,
+    onPrimary = Color.White,
+    primaryContainer = LifeOSPrimaryDeep,
+    onPrimaryContainer = LifeOSTextPrimaryDark,
+    secondary = LifeOSSecondary,
+    onSecondary = Color(0xFF20102F),
+    tertiary = LifeOSTertiary,
     background = LifeOSBackgroundDark,
     surface = LifeOSSurfaceDark,
-    surfaceVariant = Color(0xFF352F3D),
+    surfaceVariant = LifeOSSurfaceElevatedDark,
     onBackground = LifeOSTextPrimaryDark,
     onSurface = LifeOSTextPrimaryDark,
     onSurfaceVariant = LifeOSTextSecondaryDark,
-    error = Color(0xFFFFB4AB),
+    error = LifeOSDanger,
+    outline = Color(0xFF4A3C5C),
 )
 
-data class GlassColors(val surface: androidx.compose.ui.graphics.Color, val border: androidx.compose.ui.graphics.Color)
+data class GlassColors(val surface: Color, val border: Color)
 val LocalGlassColors = staticCompositionLocalOf { GlassColors(GlassLight, GlassBorderLight) }
 
 @Composable
@@ -53,22 +56,13 @@ fun LifeOSTheme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    // Dynamic color is intentionally ignored: LifeOS keeps its purple/violet identity.
+    @Suppress("UNUSED_VARIABLE")
     val context = LocalContext.current
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        darkTheme -> DarkColors
-        else -> LightColors
-    }
+    val colorScheme = if (darkTheme) DarkColors else LightColors
     CompositionLocalProvider(
         LocalGlassColors provides if (darkTheme) GlassColors(GlassDark, GlassBorderDark) else GlassColors(GlassLight, GlassBorderLight)
     ) {
         MaterialTheme(colorScheme = colorScheme, typography = LifeOSTypography, shapes = LifeOSShapes, content = content)
     }
-}
-
-private object ColorCompat {
-    val Dark = androidx.compose.ui.graphics.Color(0xFF261A35)
-    val Lavender = androidx.compose.ui.graphics.Color(0xFFEADDFF)
-    val Pink = androidx.compose.ui.graphics.Color(0xFFFFD8E4)
 }

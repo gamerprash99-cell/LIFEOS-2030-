@@ -219,96 +219,29 @@ git push -u origin main
 ---
 
 
-## 2026-09-11 — Final UI/UX, navigation, backup, alarm and capture pass
+## 2026-09-11 — Purple/Violet production UI pass (current)
 
-This is the current implementation record for the latest coding pass.
-`docs/17_CHANGELOG.md`; the `/docs` set remains the detailed technical source.
+This is the current UI implementation baseline. The existing Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation architecture is preserved. No Room schema/version/migration change was introduced.
 
-### User-facing fixes and improvements
+### Current UI / UX changes
+- Purple/violet identity restored across both light and dark themes, with reusable color, spacing, radius and typography tokens.
+- Premium glass/gradient cards, progress rings, AI orb, buttons and icon badges added to the shared UI component layer.
+- Home redesigned around Greeting → Today progress → Habits → Tasks → Spending → Latest Memory → Intelligence.
+- Home section headers are sticky so scrolling no longer leaves headings clipped underneath the status bar.
+- Home content and FAB respect status/navigation safe areas.
+- Bottom navigation Home action now explicitly returns to the Home route, fixing the reported Home tap failure after opening Spending/Timeline.
+- Timeline capture cards now keep the capture date and time visible above the media and use a stable 16:10 preview ratio.
+- Timeline date/time filtering now uses the device timezone correctly instead of raw UTC-day arithmetic.
+- Video fullscreen now stays inside the existing MainActivity dialog instead of launching a separate fullscreen Activity; it uses landscape orientation, Back handling, play/pause, seek -10/+10 seconds, progress scrubber and playback error UI.
+- Video preview now has real play/pause behavior and fullscreen entry.
+- Startup now has a short animated LifeOS splash.
+- Settings now exposes the existing dark-theme preference while preserving the same purple/violet brand.
+- App Lock continues to expose None, Biometric and PIN + recovery; no biometric data is stored by LifeOS.
+- Backup export/restore continues to use Android's native document picker so the user chooses the local destination/source.
+- Daily math alarm remains local and recurring; each alarm invocation uses a fresh +/− problem under 99 before dismissal.
 
-- Home scrolling now respects system insets and bottom content clearance so
-  the next section/header is not clipped while scrolling.
-- Home navigation from linked Spending/Expenses and Recent Activity/Timeline
-  content now returns through the existing navigation graph instead of
-  requiring the phone's hardware/software Back button.
-- Photo/capture detail keeps the captured date and time in a dedicated,
-  readable metadata section below the media, with safe scroll/bottom spacing.
-- Video viewing has a dedicated landscape fullscreen activity, play/pause, seek
-  bar, 10-second backward/forward controls, and reliable local-file playback.
-- Capture controls use safer bottom insets, immediate full-height capture mode,
-  front/back camera switching and 1×/2×/3× zoom controls.
-- The LifeOS violet/lavender palette remains the product identity; the UI was
-  not intentionally flattened into a grey-only theme.
-- Shared Material 3 LifeOS components and lightweight Compose animations are
-  used for cards, progress, status, transitions and interaction feedback.
-- Habits expose current streak, best streak, 7-day completion and 30-day
-  completion directly on the list, rather than hiding the useful metrics in
-  the detail screen.
-
-### App Lock
-
-- App Lock exposes `None`, `PIN`, and `Biometric` choices.
-- PIN verification remains a local salted-hash flow with recovery support;
-  the PIN itself is never stored as plaintext.
-- Biometric authentication uses Android `BiometricPrompt` with
-  `BIOMETRIC_STRONG`; LifeOS receives only the success/failure result.
-- Biometric setup/authentication failures are surfaced in the LifeOS UI instead
-  of crashing or pretending authentication succeeded.
-
-### Backup and restore
-
-- Backup remains a complete local JSON representation of the LifeOS data
-  repositories.
-- Export uses Android's native document/file picker so the user can choose a
-  local storage destination instead of being forced into a share-only flow.
-- Restore uses Android's native document picker to select a previously saved
-  LifeOS JSON backup, including a restore entry point during first-run onboarding.
-- Restore continues through the existing repositories and preserves the
-  existing Room architecture; the database is not deleted or recreated.
-
-### Daily alarm
-
-- Added a Home-first daily alarm card with configurable time, weekday display and
-  animated enabled state; the alarm configuration was removed from Settings.
-- Alarm opens a dedicated challenge screen and loops the alarm sound until the
-  challenge is solved.
-- Every alarm instance generates a fresh addition or subtraction problem.
-- The challenge uses two answer choices, always creates a fresh +/− problem after
-  a wrong answer, and keeps the answer below 99.
-- The Back button cannot dismiss the active alarm challenge; a correct answer
-  is required to stop it.
-- Alarm scheduling is local Android `AlarmManager` based and does not require
-  a cloud service.
-
-### Morning photo
-
-- Added a morning-photo suggestion flow that can launch the existing camera
-  capture and persist the resulting photo as a normal LifeOS capture.
-- The captured photo is therefore available to the existing Timeline through
-  the normal persisted capture record rather than through a separate cloud
-  gallery.
-
-### Architecture and data guarantees
-
-- Kotlin + Jetpack Compose architecture is preserved.
-- Existing Room entities, DAOs, repositories, ViewModels, use cases and
-  Compose Navigation remain the integration boundaries.
-- No external/cloud AI service, API key, telemetry, Firebase, remote database
-  or mandatory network dependency was introduced.
-- No destructive Room migration or database reset was introduced.
-  `/docs` provide the current project and technical documentation.
-
-### Verification status
-
-Source-level review was performed for the changed areas. A full Android
-`assembleDebug`/device test is **not claimed as passed** in this environment
-because the supplied archive does not provide a usable Gradle wrapper JAR and
-the Android SDK/toolchain is not available here.
-
-The first real build verification should be performed in Android Studio with
-the project's required SDK/JDK. Any build failure should be fixed from the
-first compiler error rather than by suppressing or bypassing it.
-
+### Verification note
+The supplied archive does not contain `gradlew`/`gradlew.bat` and does not contain Git metadata, so a Gradle build and Git-history verification could not be executed from this archive. Source-level review and static consistency checks were performed on the changed files.
 
 ## Development Update Log
 

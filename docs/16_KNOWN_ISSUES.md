@@ -166,3 +166,9 @@ does not change that Android platform behavior.
 - **Description**: Android does not allow apps to register a separate biometric enrollment from the OS — `BiometricPrompt` always verifies against whatever fingerprint/face/PIN is enrolled at the device level. This means "anyone who can unlock the phone can also pass LifeOS's biometric check" is true by Android platform design, for every app that uses BiometricPrompt (not a LifeOS-specific gap).
 - **Mitigation shipped**: A separate **App PIN** option (`AppLockType.PIN`) remains available — independent of the device's own lock screen, with salted-hash storage and secure recovery-question verification.
 - **Status**: Open (by Android platform design) with a working App PIN alternative.
+
+## 2026-09-11 — Current verification constraints
+
+- The supplied source archive does not include `gradlew`/`gradlew.bat`, so `assembleDebug`, unit tests, instrumentation tests and lint cannot be truthfully reported as executed from this archive.
+- The archive has no `.git` directory, so Git status/recent-commit verification is unavailable here.
+- Backup JSON restores database records and capture metadata; binary photo/video/audio files are not embedded in the JSON backup. Media backup should therefore be treated as a separate future product decision rather than silently assumed to be restored.

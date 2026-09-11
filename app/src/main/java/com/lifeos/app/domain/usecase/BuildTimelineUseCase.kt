@@ -11,7 +11,7 @@ import com.lifeos.app.domain.model.ExpenseCategories
 import com.lifeos.app.domain.model.TimelineItem
 import com.lifeos.app.domain.model.TimelineItemType
 import kotlinx.coroutines.flow.first
-import java.time.ZoneOffset
+import java.time.ZoneId
 
 /**
  * Builds the unified Timeline (Section 3/60) for a given day by pulling from
@@ -31,8 +31,13 @@ class BuildTimelineUseCase(
     suspend operator fun invoke(epochDay: Long): List<TimelineItem> {
         val items = mutableListOf<TimelineItem>()
 
-        val startMillis = epochDay * 86_400_000L
-        val endMillis = startMillis + 86_400_000L
+        // Convert the selected local calendar day through the device timezone.
+        // Using epochDay * 86_400_000 was UTC-based and could shift records to
+        // the previous/next day on some devices.
+        val zone = ZoneId.systemDefault()
+        val date = java.time.LocalDate.ofEpochDay(epochDay)
+        val startMillis = date.atStartOfDay(zone).toInstant().toEpochMilli()
+        val endMillis = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
 
         // Notes created/updated that day
         val notes = noteRepo.getCreatedBetween(startMillis, endMillis)
@@ -111,7 +116,7 @@ class BuildTimelineUseCase(
 
     private fun epochMillisToMinutesOfDay(millis: Long): Int {
         val instant = java.time.Instant.ofEpochMilli(millis)
-        val local = instant.atZone(ZoneOffset.systemDefault()).toLocalTime()
+        val local = instant.atZone(ZoneId.systemDefault()).toLocalTime()
         return local.hour * 60 + local.minute
     }
 }

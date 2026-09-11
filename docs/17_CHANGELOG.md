@@ -176,3 +176,20 @@ from reading code after the fact.
 - Reorganized Home into the requested dashboard hierarchy.
 - Added per-habit current/best streak and weekly/monthly completion metrics to the Habits list.
 - Bound biometric App Lock authentication to Android Keystore and biometric enrollment invalidation.
+
+## 2026-09-11 — Production UI/UX correction pass
+
+### Changed
+- Re-established purple/violet visual identity in shared theme tokens for light and dark modes.
+- Added reusable glass/gradient UI primitives, progress ring, AI orb, offline pill and standardized button/card treatment.
+- Redesigned Home hierarchy and added sticky section headers plus safe-area-aware scrolling.
+- Fixed bottom navigation Home routing from nested Spending/Timeline screens.
+- Improved Timeline capture metadata so date + time remain visible and corrected local-time day boundaries.
+- Reworked video fullscreen to stay in-app with landscape playback, Back handling, seek backward/forward, scrubber and error state.
+- Added animated startup splash and Appearance → Dark LifeOS setting.
+
+### Verification
+- No Room schema change.
+- No architecture replacement.
+- No external AI/network dependency added.
+- Gradle verification unavailable because the supplied archive has no Gradle wrapper scripts.

@@ -1,3 +1,5 @@
+> **CURRENT IMPLEMENTATION — 2026-09-11:** Ignore older cloud-AI setup examples in this historical guide. The current LifeOS app does not require or transmit data to Anthropic or any other external AI provider.
+
 # 20 — Founder Guide
 
 > **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.

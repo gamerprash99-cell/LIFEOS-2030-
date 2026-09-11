@@ -65,8 +65,8 @@ fun TimelineScreen(onOpenCapture: (String) -> Unit = {}) {
     LaunchedEffect(selectedDate) { vm.loadFor(selectedDate.toEpochDay()) }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 32.dp),
+        modifier = Modifier.fillMaxSize().statusBarsPadding(),
+        contentPadding = PaddingValues(start = 20.dp, top = 12.dp, end = 20.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -216,7 +216,7 @@ private fun TimelineMemoryCard(item: TimelineItem, captureRepository: CaptureRep
         Column(Modifier.width(28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Spacer(Modifier.height(22.dp))
             Box(Modifier.size(12.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
-            Box(Modifier.width(2.dp).height(150.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .18f)))
+            Box(Modifier.width(2.dp).height(210.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .18f)))
         }
         LifeOSCard(modifier = Modifier.weight(1f), onClick = if (item.type == TimelineItemType.CAPTURE) onOpenCapture else null) {
             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
@@ -231,7 +231,12 @@ private fun TimelineMemoryCard(item: TimelineItem, captureRepository: CaptureRep
                     Spacer(Modifier.weight(1f))
                     Text(DateTimeUtils.formatMinutes(item.timeMinutes), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 }
-                Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(
+                    DateTimeUtils.formatFullDate(DateTimeUtils.epochDayToLocalDate(item.dateEpochDay)) + " · " + DateTimeUtils.formatMinutes(item.timeMinutes),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 item.subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis) }
                 if (item.type == TimelineItemType.CAPTURE) CaptureTimelineMedia(item, captureRepository)
             }
@@ -262,11 +267,11 @@ private fun CaptureTimelineMedia(item: TimelineItem, captureRepository: CaptureR
     val capture by produceState<CaptureEntity?>(null, item.sourceId) { value = captureRepository.getById(item.sourceId) }
     val path = capture?.filePath
     when (capture?.type) {
-        CaptureType.PHOTO -> if (path != null) AsyncImage(path, "Captured photo", Modifier.fillMaxWidth().heightIn(min = 150.dp, max = 205.dp).clip(RoundedCornerShape(18.dp)), contentScale = ContentScale.Crop)
+        CaptureType.PHOTO -> if (path != null) AsyncImage(path, "Captured photo", Modifier.fillMaxWidth().aspectRatio(16f / 10f).clip(RoundedCornerShape(18.dp)), contentScale = ContentScale.Crop)
         CaptureType.VIDEO -> if (path != null) {
             val thumbnail = rememberVideoThumbnail(path)
             if (thumbnail != null) {
-                Box(Modifier.fillMaxWidth().heightIn(min = 150.dp, max = 205.dp).clip(RoundedCornerShape(18.dp))) {
+                Box(Modifier.fillMaxWidth().aspectRatio(16f / 10f).clip(RoundedCornerShape(18.dp))) {
                     androidx.compose.foundation.Image(thumbnail, "Video thumbnail", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary.copy(alpha = .92f), modifier = Modifier.size(58.dp)) { Icon(Icons.Filled.PlayArrow, "Play video", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(15.dp)) } }
                 }
