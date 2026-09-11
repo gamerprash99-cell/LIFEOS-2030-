@@ -1,5 +1,8 @@
 # 04 — Features
 
+> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+
+
 Full inventory of every implemented feature, with exact file paths.
 
 ---
@@ -15,7 +18,7 @@ Full inventory of every implemented feature, with exact file paths.
 - **Repository**: `data/repository/NoteRepository.kt`
 - **AI integration**: `core/ai/AiModels.kt` (`NoteAiAction` enum: Summarize, Generate title, Organize text, Rewrite, Improve grammar, Make shorter/longer, Extract important points, Create checklist, Generate ideas, Explain content, Create study questions) plus "Extract tasks" — all routed through `AiRepository.runNoteAction()` / `extractTasks()`
 - **Auth requirement**: None
-- **Error handling**: AI failures surface as an in-dialog message ("AI error: ..."); missing API key surfaces "Add your AI API key in Settings..."
+- **Error handling**: Local Intelligence results remain reviewable before persistent writes; no external AI API key is required by the current implementation
 - **Status**: Implemented
 - **Known limitations**: No note-to-note linking; search is plain SQL LIKE, not semantic; extracted tasks can only be approved if the note has already been saved once (noteId must be non-null — see `NoteEditorViewModel.approveExtractedTasks`)
 
@@ -152,7 +155,7 @@ Full inventory of every implemented feature, with exact file paths.
 
 **Purpose**: App Lock toggle, AI feature toggle, Reminders toggle, Backup/Export/Share.
 
-**Update (UI/UX pass)**: the visible "Anthropic API key" text field and "Save API key" button were removed from the AI Features card at the product owner's explicit request — the raw developer-key-paste UI didn't fit the intended production experience. The underlying storage mechanism (`SettingsStore.aiApiKey`/`setAiApiKey()`) was **not** deleted, only its UI entry point. **Consequence**: as of this change, there is currently no way for a user to set an AI API key through the app UI, so AI features will show their existing "Add your AI API key in Settings..." fallback message until a proper configuration mechanism is designed (see `docs/16_KNOWN_ISSUES.md`).
+**Current update:** the current AI/Intelligence implementation is local and does not require an Anthropic API key. Older provider-key notes in this historical section are superseded by `core/intelligence/*` and the current `docs/11_AI_SYSTEM.md`.
 
 - **Files**: `ui/settings/SettingsScreen.kt`
 - **Status**: Implemented

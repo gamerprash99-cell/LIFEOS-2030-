@@ -54,7 +54,6 @@ fun LifeOSNavHost() {
                     onOpenHabits = { navController.navigate(Screen.Habits.route) },
                     onOpenCapture = { showCapture = true },
                     onOpenMorningPhoto = { showMorningPhoto = true },
-                    onOpenSettings = { navController.navigate(Screen.Settings.route) },
                     onOpenAiAssistant = { navController.navigate(Screen.AiAssistant.route) },
                     onOpenNotes = { navController.navigate(Screen.Notes.route) },
                     onOpenExpenses = { navController.navigate(Screen.Expenses.route) },

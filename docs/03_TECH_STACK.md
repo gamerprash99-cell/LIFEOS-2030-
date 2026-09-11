@@ -1,5 +1,8 @@
 # 03 — Tech Stack
 
+> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+
+
 All versions below are copied verbatim from `build.gradle.kts`,
 `app/build.gradle.kts`, and `gradle/wrapper/gradle-wrapper.properties`.
 None are guessed.
@@ -18,7 +21,7 @@ None are guessed.
 | DataStore Preferences | 1.1.1 | Key-value settings storage | `core/util/SettingsStore.kt` | Modern replacement for SharedPreferences |
 | AndroidX Biometric | 1.1.0 | Fingerprint/PIN app lock | `core/security/AppLockManager.kt` | Standard biometric authentication API |
 | AndroidX WorkManager | 2.10.0 | Scheduled background jobs | `core/reminders/ReminderScheduler.kt`, `ReminderWorker.kt` | Precise, battery-friendly one-time reminder jobs |
-| OkHttp | 4.12.0 | HTTP client | `core/ai/AiClient.kt` | Makes the HTTPS call to Anthropic's API; used directly instead of a heavier framework since only one endpoint is called |
+| Local Intelligence Engine | In-repo implementation | Offline AI-style analysis | `core/intelligence/*`, `core/ai/AiRepository.kt` | Deterministic NLP, lexicons, rules, statistics and templates; no external API |
 | kotlinx.serialization (JSON) | 1.7.3 | JSON encode/decode | `core/ai/AiClient.kt`, `data/repository/BackupRepository.kt`, `domain/model/NoteBlock.kt` | Serializes note blocks, backup exports, and AI request/response bodies |
 | kotlinx.coroutines | 1.9.0 | Asynchronous programming | Throughout ViewModels and repositories | Backs every suspend fun and Flow |
 | Coil Compose | 2.7.0 | Image loading | Declared in app/build.gradle.kts; ⚠️ NOT VERIFIED as actually invoked — no AsyncImage usage found in ui/ source | Intended for displaying captured photo thumbnails |

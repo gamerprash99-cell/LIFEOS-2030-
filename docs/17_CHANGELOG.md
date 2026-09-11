@@ -1,5 +1,29 @@
 # 17 — Changelog
 
+> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+
+
+## 2026-09-11 — Timeline, Tasks, Home alarm, biometric and capture polish
+
+### Changed
+- Rebuilt the Timeline presentation around the supplied reference: compact header, date navigation, five-day strip, filters, memory count, timeline rail, media cards and scroll-in animations. The existing LifeOS color palette is unchanged.
+- Reworked Tasks into a cleaner progress-led Material 3 layout with animated completion feedback and a simpler add-task flow. Existing ViewModel/repository behavior remains in place.
+- Moved the daily math alarm experience to Home and removed the alarm configuration card from Settings. The Home card keeps the existing local AlarmManager scheduler.
+- Changed the alarm challenge to two selectable answers; every wrong choice replaces the problem with a fresh +/− problem.
+- Added front/back camera switching and 1×/2×/3× zoom to Photo and Video capture, and made capture mode open at a usable full height so controls do not require dragging the sheet upward.
+- Replaced the dialog-based fullscreen video path with a dedicated in-app landscape activity using the same local file, with play/pause, seek bar and ±10-second controls.
+- Added a Restore backup entry point to first-run onboarding while keeping the existing Android document-picker export/restore flow.
+
+### Fixed
+- Replaced the crash-prone biometric Keystore/CryptoObject setup path with the platform `BiometricPrompt` flow. Setup now launches the real Android biometric UI and only stores the selected App Lock mode after successful verification.
+- Fixed bottom-navigation Home behavior by using the same `popUpTo`/`launchSingleTop` navigation strategy for Home as the other root destinations.
+- Removed extra nested Timeline top-bar spacing that produced large blank areas and made the title feel hardcoded.
+
+### Architecture / Data
+- Kotlin + Jetpack Compose, existing Room entities/DAOs/repositories/use cases, manual DI and Compose Navigation are preserved.
+- No Room schema change or destructive migration was introduced.
+- No cloud AI, telemetry, Firebase, remote database or mandatory network dependency was introduced.
+
 ## 2026-09-11 — Timeline, App Lock setup and Home alarm UX pass
 
 ### Changed
@@ -43,7 +67,6 @@
 
 ### Documentation
 - README and relevant `/docs` files updated in the same project archive.
-- `UPDATE.md` is intentionally not used.
 
 
 

@@ -1,5 +1,8 @@
 # 19 — Developer Handover
 
+> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+
+
 *Written as if the original developer is gone and you're a senior Android
 developer picking this project up cold.*
 
@@ -8,7 +11,7 @@ developer picking this project up cold.*
 LifeOS is a native Android app (Kotlin + Jetpack Compose) that combines
 Notes, Tasks, Habits, Expenses, Diary, and a unified Timeline into one
 local-first, offline-capable personal life-management tool, with an
-optional, user-controlled AI layer (Anthropic API) for note actions, task
+offline/local AI-style layer for note actions, task
 extraction, diary drafting, and a chat assistant. There is no backend, no
 user accounts, and no cloud sync — everything lives in a local Room/SQLite
 database on the user's device.
@@ -74,8 +77,7 @@ docs/15_TROUBLESHOOTING.md.
 
 ## APIs
 
-Exactly one external API call exists in the whole app: Anthropic's Messages
-API, made from core/ai/AiClient.kt, called only via core/ai/AiRepository.kt.
+The current implementation has no external API call. AI-style functionality is local and offline, made from core/ai/AiClient.kt, called only via core/ai/AiRepository.kt.
 Full contract in docs/06_API_DOCUMENTATION.md.
 
 ## Authentication
@@ -101,7 +103,7 @@ for a new developer to be aware of immediately:
 
 1. Missing Gradle wrapper scripts (blocks CLI builds)
 2. No release signing config (blocks real releases)
-3. Database and AI API key are not encrypted at rest — treat any
+3. Database encryption at rest remains a hardening item — treat any
    real user testing as happening on data you're comfortable being
    readable if the device/emulator storage were inspected directly
 4. Full Android build/device verification remains to be performed in an
@@ -114,7 +116,7 @@ See docs/18_ROADMAP.md — organized as NOW / NEXT / LATER / FUTURE.
 
 ## Security warnings
 
-- Do not commit a real Anthropic API key anywhere in source control —
+- Do not add external AI API keys or cloud AI dependencies to LifeOS —
   the app is specifically designed so the key is a runtime, user-entered
   value, never a build-time secret. If you ever add a "default" or
   "developer" key for testing convenience, make absolutely sure it's kept

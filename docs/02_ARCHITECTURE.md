@@ -1,5 +1,8 @@
 # 02 — Architecture
 
+> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+
+
 ## High-level architecture
 
 LifeOS is a **single-module, offline-first Android application**. There is
@@ -14,8 +17,8 @@ flowchart TD
     REPO --> DAO[Room DAOs<br/>data/db/dao/*]
     DAO --> DB[(SQLite via Room<br/>lifeos.db)]
     VM --> AIREPO[AiRepository<br/>core/ai/AiRepository.kt]
-    AIREPO --> AICLIENT[AiClient<br/>core/ai/AiClient.kt]
-    AICLIENT -->|HTTPS, only if user<br/>enabled AI and key set| ANTHROPIC[(Anthropic API<br/>api.anthropic.com)]
+    AIREPO --> ENGINE[LifeOSIntelligenceEngine<br/>core/intelligence/*]
+    ENGINE --> LOCAL[On-device analysis / rules / statistics / templates]
     VM --> REMINDER[ReminderScheduler<br/>core/reminders/*]
     REMINDER --> WM[Android WorkManager]
     WM --> NOTIF[NotificationHelper leads to Android notification]
@@ -73,7 +76,7 @@ user account system.
 
 ## API architecture
 
-The only "API" the app calls is Anthropic's `POST /v1/messages` endpoint,
+The current LifeOS Intelligence layer does not call an external API; AI-style features are implemented locally with deterministic analysis, lexicons, rules, statistics and templates.
 and only from `core/ai/AiClient.kt`. There is no REST/GraphQL API that this
 app *exposes* — it has no server to expose one from. Full detail in
 `docs/06_API_DOCUMENTATION.md`.
@@ -82,7 +85,7 @@ app *exposes* — it has no server to expose one from. Full detail in
 
 | Service | Purpose | Called from |
 |---|---|---|
-| Anthropic API (`api.anthropic.com`) | Optional AI features | `core/ai/AiClient.kt` |
+| External AI API | Not used by current implementation | `core/intelligence/*`, `core/ai/AiRepository.kt` |
 
 No other third-party SDK or service (Firebase, analytics, crash reporting,
 ads, payments, maps, push notification service) exists in the dependency

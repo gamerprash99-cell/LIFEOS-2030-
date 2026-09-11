@@ -1,5 +1,8 @@
 # DOCUMENTATION_AUDIT.md
 
+> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+
+
 Final self-audit of the /docs knowledge base against the actual LifeOS codebase.
 
 ## Methodology
@@ -113,7 +116,7 @@ allowBackup="false" and runtime-only permission requests).
 4. No encryption at rest (DB or AI key)
 5. No CI/CD
 6. No automated tests
-7. Backup restore not reachable from the UI
+7. Backup restore not reachable from the UI — **resolved 2026-09-11**
 8. Several data-model fields (task priority/category/repeat) not yet exposed in their creation UI
 
 ## Recommended next documentation tasks

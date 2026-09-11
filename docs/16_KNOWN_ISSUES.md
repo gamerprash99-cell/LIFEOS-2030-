@@ -1,12 +1,16 @@
 # 16 — Known Issues
 
+> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+
+
 ---
 
 ### 2026-09-11 verification note — biometric setup path
 
-The current implementation now includes an explicit Android biometric
-enrollment path and a Keystore-key regeneration path for invalidated
-credentials. The platform limitation described in Issue #13 still applies:
+The current implementation now uses the platform Android `BiometricPrompt`
+flow for setup and unlock, with explicit UI error handling instead of the
+previous CryptoObject/Keystore setup path. The platform limitation described
+in Issue #13 still applies:
 BiometricPrompt authenticates against device-enrolled biometrics. This note
 does not change that Android platform behavior.
 
@@ -46,20 +50,12 @@ does not change that Android platform behavior.
 
 ---
 
-### Issue #3 — Backup restore has no UI entry point
+### Issue #3 — [RESOLVED] Backup restore UI was missing
 
-- **Severity**: 🟡 Medium
-- **Description**: `data/repository/BackupRepository.kt`'s
-  `importFromFile()` function is fully implemented but is never called from
-  any screen. `ui/settings/SettingsScreen.kt` only wires up Export and Share.
-- **Reproduction**: Open Settings → Backup & Export — there is no "Import"
-  or "Restore" button.
-- **Expected behavior**: A user should be able to pick a previously exported
-  JSON file and restore their data from it.
-- **Actual behavior**: No such UI exists; the feature is code-complete but unreachable.
-- **Current workaround**: None via the UI. A developer could call
-  `backupRepository.importFromFile(file)` directly for testing.
-- **Status**: Open
+- **Severity**: 🟡 Medium (was)
+- **Description**: Restore was implemented in `BackupRepository` but had no user-facing entry point.
+- **Fix**: Settings exposes Android's document picker for Restore, and first-run onboarding now also exposes Restore so a fresh installation can recover a previously exported JSON backup.
+- **Status**: Resolved.
 
 ---
 
@@ -168,6 +164,5 @@ does not change that Android platform behavior.
 
 - **Severity**: 🟡 Medium (documented limitation, mitigated with an alternative)
 - **Description**: Android does not allow apps to register a separate biometric enrollment from the OS — `BiometricPrompt` always verifies against whatever fingerprint/face/PIN is enrolled at the device level. This means "anyone who can unlock the phone can also pass LifeOS's biometric check" is true by Android platform design, for every app that uses BiometricPrompt (not a LifeOS-specific gap).
-- **Mitigation shipped**: A separate **App PIN** option (`AppLockType.PIN`) is now available — independent of the device's own lock screen, with its own salted-hash storage and a secure recovery-question flow. Users who want protection independent of "who can unlock my phone" should choose this instead of Biometric.
-- **Not done in this pass**: Binding the BiometricPrompt call to an Android Keystore `CryptoObject` (a further hardening step that ties a successful biometric result to decrypting a real secret, rather than a bare boolean) was considered but not implemented — it's a meaningfully larger, higher-risk change to make without a real device/build environment to verify it against. Flagged as a legitimate future improvement, not silently skipped.
-- **Status**: Open (by Android platform design) with a working mitigation (App PIN) shipped.
+- **Mitigation shipped**: A separate **App PIN** option (`AppLockType.PIN`) remains available — independent of the device's own lock screen, with salted-hash storage and secure recovery-question verification.
+- **Status**: Open (by Android platform design) with a working App PIN alternative.

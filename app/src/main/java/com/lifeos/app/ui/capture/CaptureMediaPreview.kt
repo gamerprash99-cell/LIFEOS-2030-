@@ -1,8 +1,7 @@
 package com.lifeos.app.ui.capture
 
+import android.content.Intent
 import android.media.MediaPlayer
-import android.net.Uri
-import android.widget.MediaController
 import android.widget.VideoView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -40,6 +39,7 @@ fun PhotoPreview(filePath: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun VideoPreview(filePath: String, modifier: Modifier = Modifier) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     if (!File(filePath).exists()) {
         MissingFileNotice(modifier)
         return
@@ -58,10 +58,7 @@ fun VideoPreview(filePath: String, modifier: Modifier = Modifier) {
                     Modifier.fillMaxSize(),
                     factory = { ctx ->
                         VideoView(ctx).apply {
-                            val controller = MediaController(ctx)
-                            setMediaController(controller)
-                            controller.setAnchorView(this)
-                            setVideoURI(Uri.fromFile(File(filePath)))
+                            setVideoPath(filePath)
                             setOnPreparedListener { it.start() }
                         }
                     }
@@ -101,7 +98,12 @@ fun VideoPreview(filePath: String, modifier: Modifier = Modifier) {
             Text("Tap play to watch · fullscreen supports landscape", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
-    if (fullscreen) VideoFullscreenViewer(filePath) { fullscreen = false }
+    if (fullscreen) {
+        LaunchedEffect(filePath) {
+            context.startActivity(Intent(context, VideoFullscreenActivity::class.java).putExtra(VideoFullscreenActivity.EXTRA_PATH, filePath))
+            fullscreen = false
+        }
+    }
 }
 
 @Composable

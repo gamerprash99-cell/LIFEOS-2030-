@@ -10,6 +10,10 @@ Start with [`docs/00_PROJECT_OVERVIEW.md`](./docs/00_PROJECT_OVERVIEW.md)
 This file remains as a quick build reference; `/docs` is the authoritative,
 detailed source going forward.
 
+## Current project snapshot — 2026-09-11
+
+The latest pass is a UI/UX and stability update across Timeline, Tasks, Home, App Lock, alarm, capture, video playback, backup/restore and onboarding. Existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and the LifeOS color identity are preserved. The current Intelligence Engine is local/offline; no external AI API or API key is required. No Room schema change or destructive migration was introduced.
+
 ---
 
 A real, working Kotlin + Jetpack Compose implementation of the LifeOS PRD:
@@ -64,14 +68,14 @@ violet/lavender theme are preserved.
 | Home dashboard | ✅ Reorganized as Today → Tasks → Habits → Spending → Recent Activity → Intelligence |
 | AI layer (note actions, task extraction, diary drafting, weekly review, chat) | ✅ Offline LifeOS Intelligence Engine; no external AI API required |
 | Diary AI-draft flow ("turn thoughts into an entry") + Approve UI | ✅ AI drafts are flagged `isReviewed = false` and shown with an Approve button until confirmed |
-| App Lock (biometric/PIN) | ✅ Biometric path uses an Android Keystore-bound credential invalidated by biometric enrollment changes |
+| App Lock (biometric/PIN) | ✅ Native Android BiometricPrompt + secure local PIN/recovery flow |
 | Backup & Export (full JSON export/import) + Share sheet | ✅ Exports a local JSON file and can hand it off via Android's native share sheet (FileProvider) |
-| Photo capture (CameraX) | ✅ Real camera preview + capture, permission requested only when opened |
-| Video capture + viewer | ✅ CameraX recording plus portrait-safe preview and landscape fullscreen viewer |
+| Photo capture (CameraX) | ✅ Real preview/capture + front/back switch + 1×/2×/3× zoom |
+| Video capture + viewer | ✅ CameraX recording + front/back switch + 1×/2×/3× zoom + landscape fullscreen + seek controls |
 | Habits list analytics | ✅ Each habit row shows current/best streak plus 7-day and 30-day completion directly on the list |
 | Audio capture (MediaRecorder) | ✅ Real start/stop recording to app-private storage |
 | Task & Habit reminders (WorkManager + notifications) | ✅ Per-item precise scheduling (not polling); Material3 time picker wired into the Add Task/Add Habit dialogs; notification permission requested only when the user turns Reminders on in Settings |
-| Onboarding flow | ✅ 4-page first-launch intro, gated by a persisted flag so it only shows once |
+| Onboarding flow | ✅ 4-page first-launch intro + restore-backup entry point |
 | Glassmorphism + LifeOS component system | ✅ shared `LifeOSDesignSystem.kt` primitives plus existing `GlassCard`/`GlassChip`; restrained Material 3 surfaces |
 
 ## What's intentionally out of scope for this scaffold
@@ -217,9 +221,8 @@ git push -u origin main
 
 ## 2026-09-11 — Final UI/UX, navigation, backup, alarm and capture pass
 
-This is the current implementation record for the latest coding pass. No
-`UPDATE.md` file is used; project updates are recorded here and in the
-relevant `/docs` files.
+This is the current implementation record for the latest coding pass.
+`docs/17_CHANGELOG.md`; the `/docs` set remains the detailed technical source.
 
 ### User-facing fixes and improvements
 
@@ -230,10 +233,10 @@ relevant `/docs` files.
   requiring the phone's hardware/software Back button.
 - Photo/capture detail keeps the captured date and time in a dedicated,
   readable metadata section below the media, with safe scroll/bottom spacing.
-- Video viewing has a dedicated 16:9 viewer, play/pause, seek bar, 10-second
-  backward/forward controls, and landscape fullscreen with restoration of the
-  previous orientation on exit.
-- Capture controls use safer bottom insets and improved visual hierarchy.
+- Video viewing has a dedicated landscape fullscreen activity, play/pause, seek
+  bar, 10-second backward/forward controls, and reliable local-file playback.
+- Capture controls use safer bottom insets, immediate full-height capture mode,
+  front/back camera switching and 1×/2×/3× zoom controls.
 - The LifeOS violet/lavender palette remains the product identity; the UI was
   not intentionally flattened into a grey-only theme.
 - Shared Material 3 LifeOS components and lightweight Compose animations are
@@ -248,10 +251,9 @@ relevant `/docs` files.
 - PIN verification remains a local salted-hash flow with recovery support;
   the PIN itself is never stored as plaintext.
 - Biometric authentication uses Android `BiometricPrompt` with
-  `BIOMETRIC_STRONG` and an Android Keystore-bound AES credential configured
-  for biometric-enrollment invalidation.
-- Biometric setup/authentication failures are surfaced to the user instead of
-  silently leaving the app or pretending authentication succeeded.
+  `BIOMETRIC_STRONG`; LifeOS receives only the success/failure result.
+- Biometric setup/authentication failures are surfaced in the LifeOS UI instead
+  of crashing or pretending authentication succeeded.
 
 ### Backup and restore
 
@@ -260,18 +262,19 @@ relevant `/docs` files.
 - Export uses Android's native document/file picker so the user can choose a
   local storage destination instead of being forced into a share-only flow.
 - Restore uses Android's native document picker to select a previously saved
-  LifeOS JSON backup.
+  LifeOS JSON backup, including a restore entry point during first-run onboarding.
 - Restore continues through the existing repositories and preserves the
   existing Room architecture; the database is not deleted or recreated.
 
 ### Daily alarm
 
-- Added a daily alarm setting with configurable time.
+- Added a Home-first daily alarm card with configurable time, weekday display and
+  animated enabled state; the alarm configuration was removed from Settings.
 - Alarm opens a dedicated challenge screen and loops the alarm sound until the
   challenge is solved.
 - Every alarm instance generates a fresh addition or subtraction problem.
-- Operands/results are constrained to the requested small range; the answer
-  entry is limited to two digits.
+- The challenge uses two answer choices, always creates a fresh +/− problem after
+  a wrong answer, and keeps the answer below 99.
 - The Back button cannot dismiss the active alarm challenge; a correct answer
   is required to stop it.
 - Alarm scheduling is local Android `AlarmManager` based and does not require
@@ -293,8 +296,7 @@ relevant `/docs` files.
 - No external/cloud AI service, API key, telemetry, Firebase, remote database
   or mandatory network dependency was introduced.
 - No destructive Room migration or database reset was introduced.
-- `UPDATE.md` is intentionally not used; this README and `/docs` are the
-  documentation record for the current work.
+  `/docs` provide the current project and technical documentation.
 
 ### Verification status
 
@@ -367,8 +369,8 @@ This pass was driven by the supplied device screenshots. The goal was not to rep
 - No external AI service, telemetry, Firebase, cloud database or network API was added.
 
 #### Documentation
-- `README.md` is the single development-update log for this archive.
-- `UPDATE.md` is intentionally not used.
+- `README.md` is the project quick-start and current-state overview.
+- `docs/17_CHANGELOG.md` records user-visible and technical changes.
 
 #### Verification status
 - Source-level review and UI implementation were completed against the supplied archive and screenshots.
@@ -469,4 +471,3 @@ This pass fixes the real-device issues reported after the previous UI redesign. 
 - The supplied project still uses its existing Gradle/Android stack; no replacement architecture or language was introduced.
 - Final device verification should cover: Home → Expenses → Home, Home → Timeline → Capture Detail → Home, video fullscreen rotation/seek, biometric setup/unlock, PIN recovery, export to Downloads, restore from a selected JSON backup, 6:00-style daily alarm, and Morning Check-in capture.
 
-`UPDATE.md` is intentionally not used; this README is the single development update record for the current archive.

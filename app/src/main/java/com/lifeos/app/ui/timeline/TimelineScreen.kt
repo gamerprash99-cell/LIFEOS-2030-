@@ -1,12 +1,10 @@
 package com.lifeos.app.ui.timeline
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -56,9 +54,7 @@ class TimelineViewModel(private val buildTimeline: BuildTimelineUseCase) : ViewM
 @Composable
 fun TimelineScreen(onOpenCapture: (String) -> Unit = {}) {
     val locator = LocalServiceLocator.current
-    val vm: TimelineViewModel = viewModel(
-        factory = LambdaViewModelFactory { TimelineViewModel(locator.buildTimelineUseCase) }
-    )
+    val vm: TimelineViewModel = viewModel(factory = LambdaViewModelFactory { TimelineViewModel(locator.buildTimelineUseCase) })
     var selectedDate by remember { mutableStateOf(DateTimeUtils.today()) }
     var selectedType by remember { mutableStateOf<TimelineItemType?>(null) }
     val timelineItems by vm.items.collectAsState()
@@ -68,127 +64,86 @@ fun TimelineScreen(onOpenCapture: (String) -> Unit = {}) {
 
     LaunchedEffect(selectedDate) { vm.loadFor(selectedDate.toEpochDay()) }
 
-    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item {
-                TimelineHeader(
-                    date = selectedDate,
-                    onPrevious = { selectedDate = selectedDate.minusDays(1) },
-                    onNext = { selectedDate = selectedDate.plusDays(1) },
-                    onToday = { selectedDate = DateTimeUtils.today() }
-                )
-            }
-            item {
-                TimelineDateStrip(
-                    selectedDate = selectedDate,
-                    onDateSelected = { selectedDate = it }
-                )
-            }
-            item {
-                TimelineFilters(
-                    selectedType = selectedType,
-                    onTypeSelected = { selectedType = it }
-                )
-            }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            TimelineHeader(
+                date = selectedDate,
+                onPrevious = { selectedDate = selectedDate.minusDays(1) },
+                onNext = { selectedDate = selectedDate.plusDays(1) },
+                onToday = { selectedDate = DateTimeUtils.today() }
+            )
+        }
+        item { TimelineDateStrip(selectedDate = selectedDate, onDateSelected = { selectedDate = it }) }
+        item { TimelineFilters(selectedType = selectedType, onTypeSelected = { selectedType = it }) }
 
-            if (visibleItems.isEmpty()) {
-                item {
-                    LifeOSEmptyState(
-                        title = if (selectedType == null) "A quiet day" else "Nothing in this filter",
-                        message = if (selectedType == null)
-                            "No memories are recorded for ${DateTimeUtils.formatFullDate(selectedDate)} yet."
-                        else
-                            "There are no ${selectedType.name.lowercase()} memories on this day.",
-                        modifier = Modifier.fillMaxWidth(),
-                        icon = Icons.Filled.AutoAwesome
-                    )
-                }
-            } else {
-                item {
-                    Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "YOUR DAY",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.primary.copy(alpha = .18f))
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "${visibleItems.size} memories",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+        item {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("YOUR DAY", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.width(8.dp))
+                HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.primary.copy(alpha = .18f))
+                Spacer(Modifier.width(8.dp))
+                Text("${visibleItems.size} memories", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
 
-                itemsIndexed(visibleItems, key = { _, item -> item.id }) { index, item ->
-                    TimelineAnimatedRow(
-                        index = index,
-                        item = item,
-                        captureRepository = locator.captureRepository,
-                        onOpenCapture = { if (item.type == TimelineItemType.CAPTURE) onOpenCapture(item.sourceId) }
-                    )
-                }
+        if (visibleItems.isEmpty()) {
+            item {
+                LifeOSEmptyState(
+                    title = if (selectedType == null) "A quiet day" else "Nothing in this filter",
+                    message = "No memories are recorded for ${DateTimeUtils.formatFullDate(selectedDate)} yet.",
+                    modifier = Modifier.fillMaxWidth(),
+                    icon = Icons.Filled.AutoAwesome
+                )
+            }
+        } else {
+            itemsIndexed(visibleItems, key = { _, item -> item.id }) { index, item ->
+                TimelineAnimatedRow(
+                    index = index,
+                    item = item,
+                    captureRepository = locator.captureRepository,
+                    onOpenCapture = { if (item.type == TimelineItemType.CAPTURE) onOpenCapture(item.sourceId) }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun TimelineHeader(
-    date: LocalDate,
-    onPrevious: () -> Unit,
-    onNext: () -> Unit,
-    onToday: () -> Unit
-) {
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    Modifier.size(34.dp).clip(RoundedCornerShape(11.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Filled.Timeline, null, tint = MaterialTheme.colorScheme.primary)
+private fun TimelineHeader(date: LocalDate, onPrevious: () -> Unit, onNext: () -> Unit, onToday: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(shape = RoundedCornerShape(11.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(36.dp)) {
+                        Box(contentAlignment = Alignment.Center) { Icon(Icons.Filled.Timeline, null, tint = MaterialTheme.colorScheme.primary) }
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Text("LifeOS Timeline", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
                 }
-                Spacer(Modifier.width(10.dp))
-                Text("Life Timeline", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                Text("• Offline  •  Local-first", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Text(
-                "• Offline  •  Local-first",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            IconButton(onClick = onToday) { Icon(Icons.Filled.Today, "Today", tint = MaterialTheme.colorScheme.primary) }
         }
-        IconButton(onClick = onToday) {
-            Icon(Icons.Filled.Today, "Today", tint = MaterialTheme.colorScheme.primary)
-        }
-    }
-
-    Spacer(Modifier.height(8.dp))
-    LifeOSCard {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = .18f)),
+            tonalElevation = 1.dp
         ) {
-            IconButton(onClick = onPrevious) { Icon(Icons.Filled.ChevronLeft, "Previous day") }
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("YOUR LIFE", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                Text(DateTimeUtils.formatFullDate(date), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Row(Modifier.fillMaxWidth().height(74.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onPrevious) { Icon(Icons.Filled.ChevronLeft, "Previous day") }
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("YOUR LIFE", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    AnimatedContent(targetState = DateTimeUtils.formatFullDate(date), label = "timeline_date") { value ->
+                        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+                IconButton(onClick = onNext) { Icon(Icons.Filled.ChevronRight, "Next day") }
             }
-            IconButton(onClick = onNext) { Icon(Icons.Filled.ChevronRight, "Next day") }
         }
     }
 }
@@ -196,37 +151,20 @@ private fun TimelineHeader(
 @Composable
 private fun TimelineDateStrip(selectedDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
     val dates = (-2..2).map { selectedDate.plusDays(it.toLong()) }
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        dates.forEach { date ->
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(horizontal = 2.dp)) {
+        itemsIndexed(dates) { _, date ->
             val selected = date == selectedDate
             Surface(
-                modifier = Modifier.weight(1f).height(62.dp).clickable { onDateSelected(date) },
-                shape = RoundedCornerShape(18.dp),
-                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .68f),
-                tonalElevation = if (selected) 5.dp else 0.dp
+                onClick = { onDateSelected(date) },
+                shape = RoundedCornerShape(22.dp),
+                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer.copy(alpha = .55f),
+                contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.width(72.dp).height(82.dp)
             ) {
-                Column(
-                    Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        date.dayOfWeek.name.take(3),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        date.dayOfMonth.toString(),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Bold
-                    )
-                    if (date == DateTimeUtils.today()) {
-                        Text("TODAY", style = MaterialTheme.typography.labelSmall, color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary)
-                    }
+                Column(Modifier.fillMaxSize().padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Text(date.dayOfWeek.name.take(3), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    Text(date.dayOfMonth.toString(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    if (selected) Text("TODAY", style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
@@ -236,32 +174,26 @@ private fun TimelineDateStrip(selectedDate: LocalDate, onDateSelected: (LocalDat
 @Composable
 private fun TimelineFilters(selectedType: TimelineItemType?, onTypeSelected: (TimelineItemType?) -> Unit) {
     val filters = listOf(
-        null to "All",
+        null to "All" ,
         TimelineItemType.CAPTURE to "Moments",
         TimelineItemType.TASK_COMPLETED to "Tasks",
         TimelineItemType.EXPENSE to "Money"
     )
-    LazyRow(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(filters.size) { index ->
-            val (type, label) = filters[index]
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(horizontal = 2.dp)) {
+        itemsIndexed(filters) { _, (type, label) ->
             FilterChip(
                 selected = selectedType == type,
                 onClick = { onTypeSelected(type) },
-                label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                label = { Text(label) },
                 leadingIcon = {
                     Icon(
                         when (type) {
-                            null -> Icons.Filled.SelectAll
+                            null -> Icons.Filled.GridView
                             TimelineItemType.CAPTURE -> Icons.Filled.PhotoCamera
                             TimelineItemType.TASK_COMPLETED -> Icons.Filled.CheckCircle
                             TimelineItemType.EXPENSE -> Icons.Filled.AccountBalanceWallet
-                            else -> Icons.Filled.AutoAwesome
-                        },
-                        null,
-                        Modifier.size(15.dp)
+                            else -> Icons.Filled.Circle
+                        }, null, Modifier.size(18.dp)
                     )
                 }
             )
@@ -270,197 +202,78 @@ private fun TimelineFilters(selectedType: TimelineItemType?, onTypeSelected: (Ti
 }
 
 @Composable
-private fun TimelineAnimatedRow(
-    index: Int,
-    item: TimelineItem,
-    captureRepository: CaptureRepository,
-    onOpenCapture: () -> Unit
-) {
+private fun TimelineAnimatedRow(index: Int, item: TimelineItem, captureRepository: CaptureRepository, onOpenCapture: () -> Unit) {
     var visible by remember(item.id) { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay((index * 45L).coerceAtMost(360L))
-        visible = true
-    }
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(tween(260)) + slideInVertically(tween(320), initialOffsetY = { it / 5 })
-    ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-            TimelineRail()
-            Spacer(Modifier.width(8.dp))
-            Box(Modifier.weight(1f)) {
-                TimelineRow(item, captureRepository, onOpenCapture)
-            }
-        }
+    LaunchedEffect(item.id) { visible = true }
+    AnimatedContent(targetState = visible, transitionSpec = { fadeIn(tween(220)) + slideInVertically(tween(280), initialOffsetY = { it / 5 }) }, label = "timeline_item_$index") { shown ->
+        if (shown) TimelineMemoryCard(item, captureRepository, onOpenCapture)
     }
 }
 
 @Composable
-private fun TimelineRail() {
-    Box(
-        Modifier.width(18.dp).height(44.dp),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        Box(
-            Modifier.width(2.dp).fillMaxHeight().padding(top = 14.dp),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            Box(
-                Modifier.size(12.dp).clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .padding(3.dp)
-            ) {
-                Box(
-                    Modifier.fillMaxSize().clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                )
-            }
+private fun TimelineMemoryCard(item: TimelineItem, captureRepository: CaptureRepository, onOpenCapture: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+        Column(Modifier.width(28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Spacer(Modifier.height(22.dp))
+            Box(Modifier.size(12.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
+            Box(Modifier.width(2.dp).height(150.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .18f)))
         }
-    }
-}
-
-@Composable
-private fun TimelineRow(
-    item: TimelineItem,
-    captureRepository: CaptureRepository,
-    onOpenCapture: () -> Unit
-) {
-    val isCapture = item.type == TimelineItemType.CAPTURE
-    val cardModifier = Modifier.fillMaxWidth().animateContentSize()
-    val content = @Composable {
-        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                TimelineTypePill(item)
-                Spacer(Modifier.weight(1f))
-                Text(
-                    DateTimeUtils.formatMinutes(item.timeMinutes),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            if (isCapture) {
-                CaptureTimelineMedia(item, captureRepository)
-            }
-
-            Row(verticalAlignment = Alignment.Top) {
-                Box(
-                    Modifier.size(34.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(item.icon, style = MaterialTheme.typography.titleMedium)
-                }
-                Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    item.subtitle?.let {
-                        Text(
-                            it,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = if (isCapture) 3 else 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
+        LifeOSCard(modifier = Modifier.weight(1f), onClick = if (item.type == TimelineItemType.CAPTURE) onOpenCapture else null) {
+            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .65f)) {
+                        Row(Modifier.padding(horizontal = 10.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(typeIcon(item.type), null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(6.dp))
+                            Text(typeLabel(item.type), style = MaterialTheme.typography.labelLarge)
+                        }
                     }
-                    item.moodOrCategory?.takeIf { it.isNotBlank() }?.let {
-                        Text(
-                            it,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
-                    }
+                    Spacer(Modifier.weight(1f))
+                    Text(DateTimeUtils.formatMinutes(item.timeMinutes), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 }
-                if (isCapture) {
-                    Icon(Icons.Filled.ChevronRight, "Open capture", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+                Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                item.subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis) }
+                if (item.type == TimelineItemType.CAPTURE) CaptureTimelineMedia(item, captureRepository)
             }
         }
     }
-
-    if (isCapture) {
-        LifeOSCard(modifier = cardModifier, onClick = onOpenCapture, content = content)
-    } else {
-        LifeOSCard(modifier = cardModifier, content = content)
-    }
 }
 
-@Composable
-private fun TimelineTypePill(item: TimelineItem) {
-    val label = when (item.type) {
-        TimelineItemType.NOTE -> "Note"
-        TimelineItemType.TASK_COMPLETED -> "Task"
-        TimelineItemType.HABIT_COMPLETED -> "Habit"
-        TimelineItemType.EXPENSE -> "Expense"
-        TimelineItemType.DIARY -> "Diary"
-        TimelineItemType.CAPTURE -> "Moment"
-    }
-    Surface(
-        shape = RoundedCornerShape(50),
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .62f)
-    ) {
-        Row(
-            Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                when (item.type) {
-                    TimelineItemType.NOTE -> Icons.Filled.EditNote
-                    TimelineItemType.TASK_COMPLETED -> Icons.Filled.CheckCircle
-                    TimelineItemType.HABIT_COMPLETED -> Icons.Filled.LocalFireDepartment
-                    TimelineItemType.EXPENSE -> Icons.Filled.Payments
-                    TimelineItemType.DIARY -> Icons.Filled.Book
-                    TimelineItemType.CAPTURE -> Icons.Filled.PhotoCamera
-                },
-                null,
-                Modifier.size(14.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(Modifier.width(5.dp))
-            Text(label, style = MaterialTheme.typography.labelSmall)
-        }
-    }
+private fun typeLabel(type: TimelineItemType) = when (type) {
+    TimelineItemType.NOTE -> "Note"
+    TimelineItemType.TASK_COMPLETED -> "Task"
+    TimelineItemType.HABIT_COMPLETED -> "Habit"
+    TimelineItemType.EXPENSE -> "Money"
+    TimelineItemType.DIARY -> "Diary"
+    TimelineItemType.CAPTURE -> "Moment"
+}
+
+private fun typeIcon(type: TimelineItemType) = when (type) {
+    TimelineItemType.NOTE -> Icons.Filled.EditNote
+    TimelineItemType.TASK_COMPLETED -> Icons.Filled.CheckCircle
+    TimelineItemType.HABIT_COMPLETED -> Icons.Filled.LocalFireDepartment
+    TimelineItemType.EXPENSE -> Icons.Filled.Payments
+    TimelineItemType.DIARY -> Icons.Filled.Book
+    TimelineItemType.CAPTURE -> Icons.Filled.PhotoCamera
 }
 
 @Composable
 private fun CaptureTimelineMedia(item: TimelineItem, captureRepository: CaptureRepository) {
-    val capture by produceState<CaptureEntity?>(null, item.sourceId) {
-        value = captureRepository.getById(item.sourceId)
-    }
+    val capture by produceState<CaptureEntity?>(null, item.sourceId) { value = captureRepository.getById(item.sourceId) }
     val path = capture?.filePath
     when (capture?.type) {
-        CaptureType.PHOTO -> if (path != null) {
-            AsyncImage(
-                model = path,
-                contentDescription = "Captured photo",
-                modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp, max = 205.dp).clip(RoundedCornerShape(18.dp)),
-                contentScale = ContentScale.Crop
-            )
-        }
+        CaptureType.PHOTO -> if (path != null) AsyncImage(path, "Captured photo", Modifier.fillMaxWidth().heightIn(min = 150.dp, max = 205.dp).clip(RoundedCornerShape(18.dp)), contentScale = ContentScale.Crop)
         CaptureType.VIDEO -> if (path != null) {
             val thumbnail = rememberVideoThumbnail(path)
             if (thumbnail != null) {
                 Box(Modifier.fillMaxWidth().heightIn(min = 150.dp, max = 205.dp).clip(RoundedCornerShape(18.dp))) {
                     androidx.compose.foundation.Image(thumbnail, "Video thumbnail", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary.copy(alpha = .9f), modifier = Modifier.size(58.dp)) {
-                            Icon(Icons.Filled.PlayArrow, "Play video", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(15.dp))
-                        }
-                    }
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary.copy(alpha = .92f), modifier = Modifier.size(58.dp)) { Icon(Icons.Filled.PlayArrow, "Play video", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(15.dp)) } }
                 }
             }
         }
-        CaptureType.AUDIO -> Surface(
-            Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .58f)
-        ) {
-            Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                LifeOSIconBadge(Icons.Filled.GraphicEq)
-                Spacer(Modifier.width(12.dp))
-                Text("Audio memory", style = MaterialTheme.typography.titleMedium)
-            }
+        CaptureType.AUDIO -> Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .58f)) {
+            Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) { LifeOSIconBadge(Icons.Filled.GraphicEq); Spacer(Modifier.width(12.dp)); Text("Audio memory", style = MaterialTheme.typography.titleMedium) }
         }
         else -> Unit
     }

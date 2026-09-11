@@ -1,9 +1,13 @@
 package com.lifeos.app.ui.home
 
+import android.app.AlarmManager
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -40,8 +44,7 @@ fun HomeScreen(
     onOpenInsights: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
     onOpenTimeline: () -> Unit = {},
-    onOpenMorningPhoto: () -> Unit = {},
-    onOpenSettings: () -> Unit = {}
+    onOpenMorningPhoto: () -> Unit = {}
 ) {
     val locator = LocalServiceLocator.current
     val viewModel: HomeViewModel = viewModel(factory = LambdaViewModelFactory { HomeViewModel(locator.getHomeSummaryUseCase, locator.taskRepository, locator.habitRepository) })
@@ -82,7 +85,7 @@ fun HomeScreen(
                 item { MorningCheckInCard(onClick = onOpenMorningPhoto) }
             }
             item {
-                HomeAlarmCard(onOpenSettings = onOpenSettings)
+                HomeAlarmCard()
             }
             item {
                 LifeOSSectionHeader("Tasks", action = { LifeOSStatusPill("View all", onClick = onOpenTasks) })
@@ -203,7 +206,7 @@ private fun MorningCheckInCard(onClick: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HomeAlarmCard(onOpenSettings: () -> Unit) {
+private fun HomeAlarmCard() {
     val locator = LocalServiceLocator.current
     val context = androidx.compose.ui.platform.LocalContext.current
     val enabled by locator.settingsStore.alarmEnabled.collectAsState(initial = false)
@@ -211,81 +214,55 @@ private fun HomeAlarmCard(onOpenSettings: () -> Unit) {
     val minute by locator.settingsStore.alarmMinute.collectAsState(initial = 0)
     var showTimePicker by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val notificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS)
-    } else null
-
-    val iconScale by animateFloatAsState(
-        targetValue = if (enabled) 1.06f else 1f,
-        label = "home_alarm_icon"
-    )
+    val notificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS) else null
+    val exactAllowed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms() else true
+    val iconScale by animateFloatAsState(if (enabled) 1.06f else 1f, label = "home_alarm_icon")
 
     LifeOSCard(modifier = Modifier.animateContentSize()) {
-        Column(
-            Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                LifeOSIconBadge(
-                    Icons.Filled.Alarm,
-                    Modifier.graphicsLayer {
-                        scaleX = iconScale
-                        scaleY = iconScale
-                    }
-                )
+        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(verticalAlignment = Alignment.Top) {
+                LifeOSIconBadge(Icons.Filled.Alarm, Modifier.graphicsLayer { scaleX = iconScale; scaleY = iconScale })
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text("Morning alarm", style = MaterialTheme.typography.titleLarge)
-                    Text(
-                        if (enabled) "Daily math challenge · ${String.format(Locale.getDefault(), "%02d:%02d", hour, minute)}"
-                        else "Wake up with a fresh + / − challenge",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text("Math challenge alarm", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Switch(
                     checked = enabled,
                     onCheckedChange = { checked ->
-                        if (checked && notificationPermission != null && !notificationPermission.isGranted) {
-                            notificationPermission.request()
-                        }
+                        if (checked && notificationPermission != null && !notificationPermission.isGranted) notificationPermission.request()
                         scope.launch {
                             locator.settingsStore.setAlarm(checked, hour, minute)
-                            if (checked) AlarmScheduler.scheduleDaily(context, hour, minute)
-                            else AlarmScheduler.cancel(context)
+                            if (checked) AlarmScheduler.scheduleDaily(context, hour, minute) else AlarmScheduler.cancel(context)
                         }
                     }
                 )
             }
-
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                FilledTonalButton(
-                    onClick = { showTimePicker = true },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Filled.Schedule, null)
-                    Spacer(Modifier.width(7.dp))
-                    Text(String.format(Locale.getDefault(), "%02d:%02d daily", hour, minute))
-                }
-                OutlinedButton(
-                    onClick = onOpenSettings,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Filled.Tune, null)
-                    Spacer(Modifier.width(7.dp))
-                    Text("Details")
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(String.format(Locale.getDefault(), "%02d:%02d", hour, minute), style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(10.dp))
+                Text("Every day", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.weight(1f))
+                FilledTonalButton(onClick = { showTimePicker = true }) { Icon(Icons.Filled.Edit, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Change") }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                listOf("M", "T", "W", "T", "F", "S", "S").forEach { day ->
+                    Surface(shape = CircleShape, color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .55f), contentColor = if (enabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(32.dp)) {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(day, style = MaterialTheme.typography.labelSmall) }
+                    }
                 }
             }
-
-            AnimatedVisibility(visible = enabled) {
-                Text(
-                    "Every ring gets a new question. The alarm keeps sounding until the correct answer is chosen.",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                AssistChip(onClick = {}, label = { Text("+ / − math") }, leadingIcon = { Icon(Icons.Filled.Calculate, null, Modifier.size(16.dp)) })
+                AssistChip(onClick = {}, label = { Text("Fresh each ring") }, leadingIcon = { Icon(Icons.Filled.Shuffle, null, Modifier.size(16.dp)) })
+            }
+            AnimatedVisibility(enabled) {
+                Text("The alarm keeps sounding until you choose the correct answer. Every ring gets a new problem under 99.", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            }
+            if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !exactAllowed) {
+                TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply { data = android.net.Uri.parse("package:${context.packageName}") }) }) {
+                    Icon(Icons.Filled.Schedule, null, Modifier.size(17.dp)); Spacer(Modifier.width(5.dp)); Text("Allow exact alarm timing")
+                }
             }
         }
     }

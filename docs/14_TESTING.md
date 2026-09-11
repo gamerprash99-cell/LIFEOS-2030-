@@ -1,5 +1,8 @@
 # 14 — Testing
 
+> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+
+
 ## Current state
 
 **Zero test files exist in this repository.** Confirmed by search: no files
@@ -48,12 +51,11 @@ checks before trusting any change:
 3. **Timeline aggregation** — create one of each item type (note, completed
    task, completed habit, expense, diary entry, capture) on the same day and
    confirm all six appear in `TimelineScreen`, sorted correctly by time
-4. **AI features with no API key** — confirm every AI entry point (note
+4. **Offline AI features** — confirm every local Intelligence/AI entry point (note
    actions, task extraction, diary draft, insights, chat) shows the
-   "Add your AI API key in Settings..." message gracefully rather than
+   local/offline result or a clear local error gracefully rather than
    crashing
-5. **AI features with a valid API key** — confirm at least one real round
-   trip to Anthropic succeeds end-to-end
+5. **Offline AI operation** — confirm AI-style features work without network access or an API key
 6. **Reminder scheduling** — set a task/habit reminder a few minutes out,
    background the app, confirm the notification fires (requires testing on
    Android 13+ to also confirm the `POST_NOTIFICATIONS` permission flow)

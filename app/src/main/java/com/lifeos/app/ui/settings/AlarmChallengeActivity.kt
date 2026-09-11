@@ -3,20 +3,22 @@ package com.lifeos.app.ui.settings
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.RingtoneManager
-import android.os.Bundle
 import android.os.Build
+import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,6 +30,11 @@ import com.lifeos.app.core.util.NotificationHelper
 import com.lifeos.app.ui.theme.LifeOSTheme
 import kotlin.random.Random
 
+private data class MathProblem(val a: Int, val b: Int, val add: Boolean) {
+    val answer: Int get() = if (add) a + b else a - b
+    val text: String get() = "$a ${if (add) "+" else "−"} $b"
+}
+
 class AlarmChallengeActivity : ComponentActivity() {
     private var player: MediaPlayer? = null
 
@@ -37,23 +44,15 @@ class AlarmChallengeActivity : ComponentActivity() {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
         } else {
-            window.addFlags(
-                android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                    android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-            )
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
         }
         startAlarmSound()
         NotificationHelper.cancelAlarmNotification(this)
-        setContent {
-            LifeOSTheme {
-                AlarmChallengeScreen(onSolved = ::finishAlarm)
-            }
-        }
+        setContent { LifeOSTheme { AlarmChallengeScreen(onSolved = ::finishAlarm) } }
     }
 
     private fun startAlarmSound() {
-        val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            ?: Settings.System.DEFAULT_ALARM_ALERT_URI
+        val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM) ?: Settings.System.DEFAULT_ALARM_ALERT_URI
         player = runCatching {
             MediaPlayer().apply {
                 setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
@@ -80,182 +79,99 @@ class AlarmChallengeActivity : ComponentActivity() {
 @Composable
 private fun AlarmChallengeScreen(onSolved: () -> Unit) {
     var problem by remember { mutableStateOf(newProblem()) }
-    var error by remember { mutableStateOf(false) }
-    val options = remember(problem) { problem.options }
+    var selected by remember { mutableStateOf<Int?>(null) }
+    var wrong by remember { mutableStateOf(false) }
+    val shake by animateFloatAsState(if (wrong) 1f else 0f, animationSpec = tween(180), label = "wrong_feedback")
+    val options = remember(problem) { buildOptions(problem) }
 
-    BackHandler(enabled = true) { /* The alarm remains active until the correct answer is chosen. */ }
+    BackHandler(enabled = true) { /* Intentionally locked until the correct answer is selected. */ }
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
-            Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            Modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 26.dp).graphicsLayer { translationX = if (wrong) kotlin.math.sin(shake * Math.PI).toFloat() * 8f else 0f },
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Surface(
-                shape = RoundedCornerShape(32.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(92.dp)
-            ) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Filled.Alarm,
-                        null,
-                        Modifier.size(46.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(22.dp))
+            Spacer(Modifier.weight(.7f))
+            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(76.dp)) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Alarm, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(38.dp)) } }
+            Spacer(Modifier.height(18.dp))
             Text("Good morning", style = MaterialTheme.typography.headlineLarge)
-            Text(
-                "Solve one quick question to stop your alarm.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
+            Text("Solve the challenge to stop your alarm", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(22.dp))
-            LifeOSMathCard(problem.text)
 
-            Spacer(Modifier.height(16.dp))
-            Text(
-                "Choose the correct answer",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
-            )
-
-            Spacer(Modifier.height(12.dp))
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                options.forEachIndexed { index, answer ->
-                    AnswerChoice(
-                        answer = answer,
-                        index = index,
-                        modifier = Modifier.weight(1f),
+            LifeOSMathCard(problem)
+            Spacer(Modifier.height(18.dp))
+            Text("Choose the correct answer", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(10.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                options.forEach { option ->
+                    AnswerOption(
+                        value = option,
+                        selected = selected == option,
                         onClick = {
-                            if (answer == problem.answer) {
-                                onSolved()
-                            } else {
+                            selected = option
+                            if (option == problem.answer) onSolved()
+                            else {
+                                wrong = true
                                 problem = newProblem()
-                                error = true
+                                selected = null
                             }
-                        }
+                        },
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
-
-            AnimatedVisibility(visible = error) {
-                Text(
-                    "Not quite — a new question is ready.",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 12.dp)
-                )
+            if (wrong) {
+                Text("Not quite — new problem ready.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 10.dp))
             }
+            Spacer(Modifier.height(16.dp))
+            AssistChip(onClick = {}, label = { Text("Fresh + / − question every ring") }, leadingIcon = { Icon(Icons.Filled.Calculate, null, Modifier.size(17.dp)) })
+            Spacer(Modifier.weight(1f))
+            Text("Answers are always non-negative and below 99.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
 
-            Spacer(Modifier.height(20.dp))
-            Surface(
-                shape = RoundedCornerShape(18.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .55f)
-            ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Filled.Lock, null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.width(10.dp))
-                    Text(
-                        "Alarm keeps ringing until the correct answer is selected.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+@Composable
+private fun LifeOSMathCard(problem: MathProblem) {
+    Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 3.dp), modifier = Modifier.fillMaxWidth()) {
+        AnimatedContent(problem.text, label = "math_problem") { expression ->
+            Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("SOLVE", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                Text("$expression = ?", style = MaterialTheme.typography.displaySmall)
             }
         }
     }
 }
 
 @Composable
-private fun AnswerChoice(
-    answer: Int,
-    index: Int,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    val label = if (index == 0) "A" else "B"
-    val scale by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = 1f,
-        label = "answer_$index"
-    )
-    FilledTonalButton(
-        onClick = onClick,
-        modifier = modifier.height(76.dp).graphicsLayer {
-            scaleX = scale
-            scaleY = scale
-        },
-        shape = RoundedCornerShape(22.dp),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(label, style = MaterialTheme.typography.labelSmall)
-            Text(answer.toString(), style = MaterialTheme.typography.headlineSmall)
+private fun AnswerOption(value: Int, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(onClick = onClick, shape = RoundedCornerShape(22.dp), color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer.copy(alpha = .55f), contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface, modifier = modifier.height(82.dp), tonalElevation = 1.dp) {
+        Row(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+            Text(value.toString(), style = MaterialTheme.typography.headlineMedium)
+            if (selected) { Spacer(Modifier.width(6.dp)); Icon(Icons.Filled.Check, null, Modifier.size(20.dp)) }
         }
     }
-}
-
-@Composable
-private fun LifeOSMathCard(text: String) {
-    Card(
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        AnimatedContent(targetState = text, label = "math_problem") { current ->
-            Box(
-                Modifier.fillMaxWidth().padding(vertical = 30.dp, horizontal = 18.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(current, style = MaterialTheme.typography.displaySmall)
-            }
-        }
-    }
-}
-
-private data class MathProblem(val a: Int, val b: Int, val add: Boolean) {
-    val answer: Int get() = if (add) a + b else a - b
-    val text: String get() = "$a ${if (add) "+" else "−"} $b = ?"
-    val options: List<Int>
-        get() {
-            val wrong = when {
-                answer == 0 -> 1
-                answer == 98 -> 97
-                else -> if (Random.nextBoolean()) answer - 1 else answer + 1
-            }
-            return if (Random.nextBoolean()) listOf(answer, wrong) else listOf(wrong, answer)
-        }
 }
 
 private fun newProblem(): MathProblem {
-    repeat(40) {
-        val a = Random.nextInt(1, 99)
-        val b = Random.nextInt(1, 99)
+    repeat(30) {
         val add = Random.nextBoolean()
-        val answer = if (add) a + b else a - b
-        if (answer in 0..98) return MathProblem(a, b, add)
+        return if (add) {
+            val a = Random.nextInt(1, 50)
+            val b = Random.nextInt(1, 99 - a)
+            MathProblem(a, b, true)
+        } else {
+            val a = Random.nextInt(2, 99)
+            val b = Random.nextInt(1, a)
+            MathProblem(a, b, false)
+        }
     }
-    return MathProblem(12, 7, true)
+    return MathProblem(12, 7, false)
 }
 
-private fun newProblem(): MathProblem {
-    repeat(20) {
-        val a = Random.nextInt(1, 99)
-        val b = Random.nextInt(1, 99)
-        val add = Random.nextBoolean()
-        val answer = if (add) a + b else a - b
-        if (answer in 0..98) return MathProblem(a, b, add)
-    }
-    return MathProblem(12, 7, true)
+private fun buildOptions(problem: MathProblem): List<Int> {
+    val correct = problem.answer
+    var wrong = if (correct == 0) 1 else correct + if (correct > 90) -7 else 7
+    if (wrong !in 0..98 || wrong == correct) wrong = (correct + 13) % 99
+    return if (Random.nextBoolean()) listOf(correct, wrong) else listOf(wrong, correct)
 }

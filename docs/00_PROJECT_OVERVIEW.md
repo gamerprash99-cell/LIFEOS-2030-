@@ -1,5 +1,8 @@
 # 00 — Project Overview
 
+> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+
+
 *Written for a non-technical founder. No code knowledge required to read this document.*
 
 ## What is this application?
@@ -65,8 +68,7 @@ repository:
 - All data (notes, tasks, habits, expenses, diary entries, captures) is stored
   **only on the user's own phone**, in a local database called **Room** (built
   on SQLite). There is no cloud database and no company server holding user data.
-- The only outside service the app talks to is **Anthropic's AI API** — and
-  only if and when the user turns AI features on and provides their own API key.
+- LifeOS does not require an outside AI service or API key. Intelligence runs locally on-device.
 
 See `docs/20_FOUNDER_GUIDE.md` for plain-English explanations of every one of
 these terms.
@@ -75,7 +77,7 @@ these terms.
 
 | Service | Used for | Required? |
 |---|---|---|
-| Anthropic API (`api.anthropic.com`) | Optional AI features (note actions, task extraction, diary drafting, weekly review, AI chat) | No — app fully functions without it; AI screens show a "no API key" message |
+| External AI API | Not used by the current implementation | No — local Intelligence Engine is used |
 
 No other third-party or cloud service (no Firebase, no analytics SDK, no
 crash-reporting SDK, no ads SDK, no payments SDK) is present in the codebase.

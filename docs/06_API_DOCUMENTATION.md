@@ -1,5 +1,11 @@
 # 06 — API Documentation
 
+## Current status
+LifeOS currently has **no external HTTP/API integration**. AI-style functionality is handled by the local Intelligence Engine on-device. Any older Anthropic API material retained below is historical documentation and is superseded by the current implementation.
+
+> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+
+
 > **Current status (2026-09-11):** LifeOS exposes no backend API and makes no
 > outbound AI/API calls. The Anthropic section below is retained as historical
 > documentation of the removed implementation and must not be treated as a

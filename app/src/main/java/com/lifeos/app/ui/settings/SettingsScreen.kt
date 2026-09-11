@@ -1,10 +1,7 @@
 package com.lifeos.app.ui.settings
 
-import android.app.AlarmManager
 import android.content.Context
-import android.content.Intent
 import android.os.Build
-import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -26,7 +23,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lifeos.app.BuildConfig
 import com.lifeos.app.core.di.LambdaViewModelFactory
 import com.lifeos.app.core.di.LocalServiceLocator
-import com.lifeos.app.core.reminders.AlarmScheduler
 import com.lifeos.app.core.util.AppLockType
 import com.lifeos.app.core.util.NotificationHelper
 import com.lifeos.app.core.util.SettingsStore
@@ -35,24 +31,14 @@ import com.lifeos.app.data.repository.BackupRepository
 import com.lifeos.app.ui.components.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 class SettingsViewModel(private val settingsStore: SettingsStore, private val backupRepository: BackupRepository) : ViewModel() {
     val appLockType = settingsStore.appLockType
     val aiFeaturesEnabled = settingsStore.aiFeaturesEnabled
-    val alarmEnabled = settingsStore.alarmEnabled
-    val alarmHour = settingsStore.alarmHour
-    val alarmMinute = settingsStore.alarmMinute
     private val _status = MutableStateFlow<String?>(null)
     val status: StateFlow<String?> = _status
 
     fun setAiFeaturesEnabled(enabled: Boolean) = viewModelScope.launch { settingsStore.setAiFeaturesEnabled(enabled) }
-
-    fun saveAlarm(context: Context, enabled: Boolean, hour: Int, minute: Int) = viewModelScope.launch {
-        settingsStore.setAlarm(enabled, hour, minute)
-        if (enabled) AlarmScheduler.scheduleDaily(context, hour, minute) else AlarmScheduler.cancel(context)
-        _status.value = if (enabled) String.format(Locale.getDefault(), "Daily alarm set for %02d:%02d", hour, minute) else "Daily alarm turned off"
-    }
 
     fun exportBackup(context: Context, uri: android.net.Uri) = viewModelScope.launch {
         runCatching { context.contentResolver.openOutputStream(uri)?.use { backupRepository.exportJson(it, BuildConfig.VERSION_NAME) } ?: error("Storage location could not be opened") }
@@ -75,11 +61,7 @@ fun SettingsScreen(onOpenAppLockSetup: () -> Unit) {
     val vm: SettingsViewModel = viewModel(factory = LambdaViewModelFactory { SettingsViewModel(locator.settingsStore, locator.backupRepository) })
     val lock by vm.appLockType.collectAsState(initial = AppLockType.NONE)
     val ai by vm.aiFeaturesEnabled.collectAsState(initial = false)
-    val alarmEnabled by vm.alarmEnabled.collectAsState(initial = false)
-    val alarmHour by vm.alarmHour.collectAsState(initial = 6)
-    val alarmMinute by vm.alarmMinute.collectAsState(initial = 0)
     val status by vm.status.collectAsState()
-    var showTimePicker by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let { vm.exportBackup(context, it) } }
     val restoreLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { vm.restoreBackup(context, it) } }
@@ -111,7 +93,6 @@ fun SettingsScreen(onOpenAppLockSetup: () -> Unit) {
             }
 
             LifeOSSectionHeader("Daily rhythm", supportingText = "Make mornings intentional")
-            AlarmCard(vm, context, alarmEnabled, alarmHour, alarmMinute, showTimePicker = { showTimePicker = true })
             MorningPhotoInfoCard()
 
             RemindersCard()
@@ -144,52 +125,6 @@ fun SettingsScreen(onOpenAppLockSetup: () -> Unit) {
         }
     }
 
-    if (showTimePicker) {
-        TimePickerDialogCompat(
-            hour = alarmHour,
-            minute = alarmMinute,
-            onDismiss = { showTimePicker = false },
-            onConfirm = { h, m -> showTimePicker = false; vm.saveAlarm(context, true, h, m) }
-        )
-    }
-}
-
-@Composable
-private fun AlarmCard(vm: SettingsViewModel, context: Context, enabled: Boolean, hour: Int, minute: Int, showTimePicker: () -> Unit) {
-    val notificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS) else null
-    val exactAllowed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms() else true
-    LifeOSCard {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                LifeOSIconBadge(Icons.Filled.Alarm)
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) { Text("Math alarm", style = MaterialTheme.typography.titleLarge); Text("Solve a fresh + / − problem to stop it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                Switch(checked = enabled, onCheckedChange = {
-                    if (it && notificationPermission != null && !notificationPermission.isGranted) notificationPermission.request()
-                    vm.saveAlarm(context, it, hour, minute)
-                })
-            }
-            OutlinedButton(onClick = showTimePicker, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Filled.Schedule, null); Spacer(Modifier.width(8.dp)); Text(String.format(Locale.getDefault(), "Every day · %02d:%02d", hour, minute)) }
-            Text("Questions use addition/subtraction with answers below 99 and change every time the alarm rings.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !exactAllowed) {
-                Text("For the most reliable timing, allow exact alarms for LifeOS.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                OutlinedButton(onClick = { context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply { data = android.net.Uri.parse("package:${context.packageName}") }) }, modifier = Modifier.fillMaxWidth()) { Text("Allow exact alarm timing") }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TimePickerDialogCompat(hour: Int, minute: Int, onDismiss: () -> Unit, onConfirm: (Int, Int) -> Unit) {
-    val state = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = true)
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Daily alarm time") },
-        text = { TimePicker(state = state) },
-        confirmButton = { TextButton(onClick = { onConfirm(state.hour, state.minute) }) { Text("Set alarm") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
 }
 
 private fun lockLabel(lock: AppLockType) = when (lock) {

@@ -1,5 +1,8 @@
 # 10 — Backend
 
+> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+
+
 ## There is no backend server
 
 Confirmed by direct repository inspection: no server directory, no
@@ -53,7 +56,7 @@ everything runs within Android's own WorkManager on the user's device.
 
 ## External integrations
 
-Only one: the Anthropic AI API call, documented fully in
+There is no backend service and no external AI API call in the current implementation. Local persistence and intelligence are documented in
 `docs/06_API_DOCUMENTATION.md`. No other integration (payment processor,
 email service, SMS service, push notification service, analytics pipeline)
 exists.

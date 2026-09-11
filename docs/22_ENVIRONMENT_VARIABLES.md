@@ -1,5 +1,8 @@
 # 22 — Environment Variables
 
+> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+
+
 ## Summary
 
 **This project uses zero build-time environment variables.** Confirmed by
@@ -17,11 +20,13 @@ core/util/SettingsStore.kt (Android DataStore Preferences) on their own device.
 |---|---|---|---|---|
 | (none exist) | — | — | — | — |
 
-## The one runtime "secret" (not an environment variable)
+## Current runtime secrets
+
+There is no external AI API key in the current implementation.
 
 | Value | Purpose | Required for | Where entered | Where stored | Example format |
 |---|---|---|---|---|---|
-| Anthropic API key | Authenticates AI feature calls | AI features only (app works fully without it) | ui/settings/SettingsScreen.kt, a plain text field | core/util/SettingsStore.kt via DataStore Preferences key ai_api_key (unencrypted — see docs/08_SECURITY.md) | YOUR_ANTHROPIC_API_KEY |
+| External AI API key | Not used by current implementation | None | None | None | — |
 
 ## Standard Android files that could hold secrets (currently empty/absent)
 

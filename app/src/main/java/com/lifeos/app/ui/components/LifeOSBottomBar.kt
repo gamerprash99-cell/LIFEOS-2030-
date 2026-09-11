@@ -37,14 +37,10 @@ fun LifeOSBottomBar(navController: NavHostController) {
             NavigationBarItem(
                 selected = selected,
                 onClick = {
-                    if (item.screen == Screen.Home) {
-                        navController.popBackStack(Screen.Home.route, inclusive = false)
-                    } else {
-                        navController.navigate(item.screen.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+                    navController.navigate(item.screen.route) {
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
                     }
                 },
                 icon = { Icon(if (selected) item.selectedIcon else item.unselectedIcon, item.label) },

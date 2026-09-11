@@ -1,36 +1,29 @@
 package com.lifeos.app.ui.tasks
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -40,8 +33,8 @@ import com.lifeos.app.core.di.LocalServiceLocator
 import com.lifeos.app.core.util.DateTimeUtils
 import com.lifeos.app.data.db.entities.TaskEntity
 import com.lifeos.app.data.repository.TaskRepository
-import com.lifeos.app.ui.components.GlassCard
-import com.lifeos.app.ui.components.ReminderTimePickerDialog
+import com.lifeos.app.ui.components.*
+import com.lifeos.app.ui.theme.LifeOSSpacing
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -51,34 +44,24 @@ import java.time.ZoneId
 
 class TasksViewModel(private val taskRepository: TaskRepository) : ViewModel() {
     private val today = DateTimeUtils.today().toEpochDay()
-
-    val tasksToday: StateFlow<List<TaskEntity>> = taskRepository.observeForDay(today)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val overdue: StateFlow<List<TaskEntity>> = taskRepository.observeOverdue(today)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
+    val tasksToday: StateFlow<List<TaskEntity>> = taskRepository.observeForDay(today).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val overdue: StateFlow<List<TaskEntity>> = taskRepository.observeOverdue(today).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     fun toggleTask(id: String, completed: Boolean) = viewModelScope.launch { taskRepository.setCompleted(id, completed) }
-
     fun addQuickTask(title: String, reminderTime: LocalTime?) {
         if (title.isBlank()) return
         viewModelScope.launch {
-            val reminderMillis = reminderTime?.let {
-                DateTimeUtils.epochDayToLocalDate(today).atTime(it)
-                    .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-            }
+            val reminderMillis = reminderTime?.let { DateTimeUtils.epochDayToLocalDate(today).atTime(it).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() }
             taskRepository.createTask(title = title, dueDateEpochDay = today, reminderEpochMillis = reminderMillis)
         }
     }
-
     fun keepForTomorrow(id: String) = viewModelScope.launch { taskRepository.keepForTomorrow(id, today) }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TasksScreen() {
     val locator = LocalServiceLocator.current
     val viewModel: TasksViewModel = viewModel(factory = LambdaViewModelFactory { TasksViewModel(locator.taskRepository) })
-
     val today by viewModel.tasksToday.collectAsState()
     val overdue by viewModel.overdue.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
@@ -86,47 +69,56 @@ fun TasksScreen() {
     var newTaskText by remember { mutableStateOf("") }
     var reminderTime by remember { mutableStateOf<LocalTime?>(null) }
 
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("Tasks") }) },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }) { Icon(Icons.Filled.Add, contentDescription = "Add task") }
+    val incomplete = today.filterNot { it.isCompleted }
+    val completed = today.filter { it.isCompleted }
+    val progress = if (today.isEmpty()) 0f else completed.size.toFloat() / today.size
+
+    Box(Modifier.fillMaxSize()) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 18.dp, bottom = LifeOSSpacing.extendedFabContentClearance),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Tasks", style = MaterialTheme.typography.headlineLarge)
+                Text("Plan today. Finish what matters.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
-    ) { padding ->
-        val todayIncomplete = today.filter { !it.isCompleted }
-        val todayCompleted = today.filter { it.isCompleted }
-
-        LazyColumn(
-            modifier = Modifier.padding(padding).fillMaxWidth(),
-            contentPadding = PaddingValues(
-                start = 16.dp, end = 16.dp, top = 16.dp,
-                bottom = com.lifeos.app.ui.theme.LifeOSSpacing.fabContentClearance
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            if (overdue.isNotEmpty()) {
-                item { SectionHeader("Overdue", color = MaterialTheme.colorScheme.error) }
-                items(overdue, key = { "overdue-${it.id}" }) { task ->
-                    TaskRow(task, onToggle = { viewModel.toggleTask(task.id, it) }, onKeepForTomorrow = { viewModel.keepForTomorrow(task.id) })
-                }
-            }
-
-            item { SectionHeader("Today") }
-            if (todayIncomplete.isEmpty() && todayCompleted.isEmpty()) {
-                item { Text("No tasks for today. Tap + to add one.", style = MaterialTheme.typography.bodySmall) }
-            } else if (todayIncomplete.isEmpty()) {
-                item { Text("All done for today 🎉", style = MaterialTheme.typography.bodySmall) }
-            }
-            items(todayIncomplete, key = { it.id }) { task ->
-                TaskRow(task, onToggle = { viewModel.toggleTask(task.id, it) }, onKeepForTomorrow = { viewModel.keepForTomorrow(task.id) })
-            }
-
-            if (todayCompleted.isNotEmpty()) {
-                item { SectionHeader("Completed") }
-                items(todayCompleted, key = { it.id }) { task ->
-                    TaskRow(task, onToggle = { viewModel.toggleTask(task.id, it) }, onKeepForTomorrow = { viewModel.keepForTomorrow(task.id) })
+        item {
+            LifeOSCard {
+                Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(48.dp)) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(Icons.Filled.CheckCircle, null, tint = MaterialTheme.colorScheme.primary) } }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(if (today.isEmpty()) "A clean slate" else "Today's rhythm", style = MaterialTheme.typography.titleLarge)
+                            Text(if (today.isEmpty()) "Add a task when you're ready." else "${completed.size} of ${today.size} complete", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text("${(progress * 100).toInt()}%", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                    }
+                    LifeOSProgress(progress)
                 }
             }
         }
+        if (overdue.isNotEmpty()) {
+            item { SectionHeader("Overdue", MaterialTheme.colorScheme.error) }
+            items(overdue, key = { "overdue-${it.id}" }) { task -> TaskRow(task, onToggle = { viewModel.toggleTask(task.id, it) }, onKeepForTomorrow = { viewModel.keepForTomorrow(task.id) }) }
+        }
+        item { SectionHeader("Today") }
+        if (incomplete.isEmpty() && completed.isEmpty()) {
+            item { LifeOSEmptyState("No tasks today", "Tap + to add your first task.", icon = Icons.Filled.CheckCircle) }
+        } else if (incomplete.isEmpty()) {
+            item { LifeOSCard { Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) { LifeOSIconBadge(Icons.Filled.Celebration); Spacer(Modifier.width(12.dp)); Text("Everything is done. Nice work!", style = MaterialTheme.typography.titleMedium) } } }
+        }
+        items(incomplete, key = { it.id }) { task -> TaskRow(task, onToggle = { viewModel.toggleTask(task.id, it) }, onKeepForTomorrow = { viewModel.keepForTomorrow(task.id) }) }
+        if (completed.isNotEmpty()) {
+            item { SectionHeader("Completed") }
+            items(completed, key = { "completed-${it.id}" }) { task -> TaskRow(task, onToggle = { viewModel.toggleTask(task.id, it) }, onKeepForTomorrow = { viewModel.keepForTomorrow(task.id) }) }
+        }
+    }
+
+    FloatingActionButton(onClick = { showAddDialog = true }, modifier = Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(16.dp)) { Icon(Icons.Filled.Add, "Add task") }
     }
 
     if (showAddDialog) {
@@ -134,54 +126,61 @@ fun TasksScreen() {
             onDismissRequest = { showAddDialog = false },
             title = { Text("New task") },
             text = {
-                Column(
-                    modifier = Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    OutlinedTextField(value = newTaskText, onValueChange = { newTaskText = it }, placeholder = { Text("What do you need to do?") })
-                    TextButton(onClick = { showTimePicker = true }) {
-                        Icon(Icons.Filled.Notifications, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                        Text(reminderTime?.let { "Remind at $it" } ?: "Set a reminder (optional)")
-                    }
+                Column(Modifier.fillMaxWidth().imePadding(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(newTaskText, { newTaskText = it }, Modifier.fillMaxWidth(), placeholder = { Text("What needs to get done?") }, label = { Text("Task") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text))
+                    OutlinedButton(onClick = { showTimePicker = true }, Modifier.fillMaxWidth()) { Icon(Icons.Filled.Schedule, null); Spacer(Modifier.width(8.dp)); Text(reminderTime?.let { "Reminder · ${DateTimeUtils.formatMinutes(it.hour * 60 + it.minute)}" } ?: "Add reminder") }
                 }
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.addQuickTask(newTaskText, reminderTime)
-                    newTaskText = ""
-                    reminderTime = null
-                    showAddDialog = false
-                }) { Text("Add") }
-            },
+            confirmButton = { TextButton(enabled = newTaskText.isNotBlank(), onClick = { viewModel.addQuickTask(newTaskText, reminderTime); newTaskText = ""; reminderTime = null; showAddDialog = false }) { Text("Add task") } },
             dismissButton = { TextButton(onClick = { showAddDialog = false }) { Text("Cancel") } }
         )
     }
-
     if (showTimePicker) {
-        ReminderTimePickerDialog(
-            onDismiss = { showTimePicker = false },
-            onConfirm = { time -> reminderTime = time; showTimePicker = false }
-        )
+        ReminderTimePickerDialog(onDismiss = { showTimePicker = false }, onConfirm = { time -> reminderTime = time; showTimePicker = false })
     }
 }
 
 @Composable
 private fun SectionHeader(text: String, color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface) {
-    Text(
-        text,
-        style = MaterialTheme.typography.titleMedium,
-        color = color,
-        modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
-    )
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(text, style = MaterialTheme.typography.titleMedium, color = color)
+        Spacer(Modifier.width(10.dp))
+        HorizontalDivider(Modifier.weight(1f), color = color.copy(alpha = .16f))
+    }
 }
 
-/**
- * A task's due-date label relative to today, e.g. "Today · 5:00 PM",
- * "Tomorrow", or a full date for anything further out. Built entirely from
- * existing TaskEntity fields (dueDateEpochDay/dueTimeMinutes) — no new data.
- */
 @Composable
-private fun dueDateLabel(task: com.lifeos.app.data.db.entities.TaskEntity): String? {
+private fun TaskRow(task: TaskEntity, onToggle: (Boolean) -> Unit, onKeepForTomorrow: () -> Unit) {
+    val checkScale by animateFloatAsState(if (task.isCompleted) 1.08f else 1f, label = "task_check_${task.id}")
+    val titleColor by animateColorAsState(if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface, label = "task_color_${task.id}")
+
+    LifeOSCard(modifier = Modifier.animateContentSize(), onClick = { onToggle(!task.isCompleted) }) {
+        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(onClick = { onToggle(!task.isCompleted) }, shape = CircleShape, color = if (task.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer.copy(alpha = .62f), modifier = Modifier.size(42.dp).graphicsLayer { scaleX = checkScale; scaleY = checkScale }) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(if (task.isCompleted) Icons.Filled.Check else Icons.Filled.Circle, if (task.isCompleted) "Completed" else "Incomplete", tint = if (task.isCompleted) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary, modifier = Modifier.size(if (task.isCompleted) 22.dp else 10.dp)) }
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(task.title, style = MaterialTheme.typography.titleMedium, color = titleColor, textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None)
+                    dueDateLabel(task)?.let { Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
+                task.description?.takeIf { it.isNotBlank() }?.let { Text("…", style = MaterialTheme.typography.titleLarge) }
+            }
+            AnimatedContent(targetState = task.isCompleted, transitionSpec = { fadeIn() + scaleIn() togetherWith fadeOut() }, label = "task_status_${task.id}") { done ->
+                if (!done) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        AssistChip(onClick = onKeepForTomorrow, label = { Text("Move to tomorrow") }, leadingIcon = { Icon(Icons.Filled.ArrowForward, null, Modifier.size(16.dp)) })
+                    }
+                } else {
+                    Text("Completed", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+        }
+    }
+}
+
+private fun dueDateLabel(task: TaskEntity): String? {
     val dueDay = task.dueDateEpochDay ?: return null
     val todayEpochDay = DateTimeUtils.today().toEpochDay()
     val dayLabel = when (dueDay) {
@@ -189,55 +188,6 @@ private fun dueDateLabel(task: com.lifeos.app.data.db.entities.TaskEntity): Stri
         todayEpochDay + 1 -> "Tomorrow"
         else -> DateTimeUtils.formatFullDate(DateTimeUtils.epochDayToLocalDate(dueDay))
     }
-    val timeLabel = task.dueTimeMinutes?.let { DateTimeUtils.formatMinutes(it) }
+    val timeLabel = task.dueTimeMinutes?.let(DateTimeUtils::formatMinutes)
     return if (timeLabel != null) "$dayLabel · $timeLabel" else dayLabel
-}
-
-@Composable
-private fun TaskRow(task: TaskEntity, onToggle: (Boolean) -> Unit, onKeepForTomorrow: () -> Unit) {
-    GlassCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onToggle(!task.isCompleted) }
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                // Checkbox keeps its own click so tapping it doesn't also trigger the card's ripple twice —
-                // Compose lets a child clickable consume its own tap independently of the parent's.
-                Checkbox(checked = task.isCompleted, onCheckedChange = onToggle)
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        task.title,
-                        style = MaterialTheme.typography.bodyLarge,
-                        textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
-                    )
-                    dueDateLabel(task)?.let { label ->
-                        Text(
-                            label,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                    }
-                    task.description?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp))
-                    }
-                }
-            }
-            // "Move to tomorrow" is an ACTION button, not a status — kept visually
-            // separate (smaller, muted, with an icon) so it can never be mistaken
-            // for the task's actual due date shown above.
-            if (!task.isCompleted) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onKeepForTomorrow) {
-                        Icon(
-                            Icons.Filled.ArrowForward,
-                            contentDescription = null,
-                            modifier = Modifier.padding(end = 4.dp)
-                        )
-                        Text("Move to tomorrow", style = MaterialTheme.typography.labelMedium)
-                    }
-                }
-            }
-        }
-    }
 }

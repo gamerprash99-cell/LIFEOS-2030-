@@ -1,5 +1,8 @@
 # 18 — Roadmap
 
+> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+
+
 ⚠️ **NOT VERIFIED FROM CODEBASE as a formal product roadmap** — no roadmap
 document exists in the repo. Everything below is derived from: (a) code
 comments that explicitly defer work ("Phase 6 hardening item", "left as an
@@ -41,10 +44,10 @@ Items are sequenced by how blocking they are to shipping anything real.
 
 ## NEXT (high-value, moderate effort)
 
-### Wire up backup restore in the UI
+### Wire up backup restore in the UI — **COMPLETED 2026-09-11**
 - **Goal**: Close Issue #3 in `docs/16_KNOWN_ISSUES.md`
 - **User benefit**: Users can actually recover their data or move it to a new device
-- **Technical work**: Add a file picker + "Restore backup" button in `SettingsScreen.kt` calling the already-implemented `BackupRepository.importFromFile()`
+- **Technical work**: Add Android document-picker restore in `SettingsScreen.kt` and first-run onboarding, calling the existing `BackupRepository.importFromFile()` through the repository/Room path
 - **Dependencies**: None — the backend logic already exists
 - **Complexity**: Small
 - **Risks**: Need a clear UX for merge-vs-overwrite behavior (current `restore()` upserts by primary key, so it merges)

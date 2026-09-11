@@ -1,5 +1,8 @@
 # 15 — Troubleshooting
 
+> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+
+
 Format: **PROBLEM → CAUSE → SOLUTION**. Only documenting causes that are
 directly verifiable from this repository's actual configuration — not
 generic Android troubleshooting advice.
@@ -42,7 +45,8 @@ release build can be produced. This is a required setup step, not a bug.
 
 ---
 
-### PROBLEM: AI features always show "Add your AI API key in Settings to use AI features."
+### Historical note: external AI/API troubleshooting
+The current implementation does not require an AI API key or external AI service. Older provider-specific troubleshooting below is retained only as historical context and should not be used as the current setup path.
 
 **CAUSE**: `core/ai/AiClient.kt`'s `apiKeyProvider` returns null/blank —
 either no key has been entered yet, or it wasn't saved.
@@ -144,12 +148,10 @@ control has not been initialized yet.
 
 ---
 
-### PROBLEM: Backup restore doesn't seem to do anything when tapped
+### PROBLEM: Backup restore fails
 
-**CAUSE**: ⚠️ There currently **is no restore button** anywhere in the UI.
-`BackupRepository.importFromFile()` is fully implemented in code but is not
-called from any screen (`SettingsScreen.kt` only wires up Export/Share).
+**CURRENT STATUS**: Restore is available from Settings and first-run onboarding through Android's document picker.
 
-**SOLUTION**: This is a real gap, not a bug to "fix" via troubleshooting —
-see `docs/16_KNOWN_ISSUES.md`, Issue #3, and `docs/18_ROADMAP.md` for it as
-a near-term task.
+**CAUSE**: The selected file is not a valid LifeOS JSON backup, or the document provider denied access.
+
+**SOLUTION**: Select a previously exported LifeOS JSON backup and allow the document picker access. Restore uses the existing repository/Room path and does not recreate the database.
