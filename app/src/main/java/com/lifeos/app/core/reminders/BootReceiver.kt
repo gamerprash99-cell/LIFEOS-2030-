@@ -19,9 +19,8 @@ class BootReceiver : BroadcastReceiver() {
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 val store = ServiceLocator.get(context.applicationContext).settingsStore
-                if (store.alarmEnabled.first()) {
-                    AlarmScheduler.scheduleDaily(context.applicationContext, store.alarmHour.first(), store.alarmMinute.first())
-                }
+                val alarms = store.alarmTimes.first()
+                AlarmScheduler.scheduleAll(context.applicationContext, alarms)
             } finally {
                 pending.finish()
             }

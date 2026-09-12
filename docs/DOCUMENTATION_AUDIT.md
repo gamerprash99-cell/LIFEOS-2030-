@@ -1,6 +1,6 @@
 # DOCUMENTATION_AUDIT.md
 
-> **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
+> **Current project snapshot — 2026-09-12:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
 
 
 Final self-audit of the /docs knowledge base against the actual LifeOS codebase.
@@ -24,7 +24,7 @@ below and in docs/16_KNOWN_ISSUES.md.
 | Architecture documentation | Complete | 100% — no backend/multi-service complexity exists to under-document |
 | Feature documentation | Complete | 100% of implemented features covered in 04_FEATURES.md; all gaps (repeat rules, restore UI) explicitly flagged, not hidden |
 | Database documentation | Complete | 100% of the 7 tables documented field-by-field from actual entity source |
-| API documentation | Complete | 100% — only one external API exists and it's fully documented |
+| API documentation | Complete | 100% — current app exposes local repository/use-case integrations; historical external-provider notes are explicitly marked as superseded |
 | Security documentation | Complete as a review | Classified findings provided; this is a documentation review, not a penetration test, and is labeled as such |
 | Deployment documentation | Complete but reveals real gaps | The process is documented accurately, including that signing/CI/release are not yet set up — an honest gap in the project, not in the documentation of it |
 | Testing documentation | Complete but reveals a real gap | Zero tests exist; documented accurately rather than papered over |
@@ -81,14 +81,13 @@ NOW/NEXT sections. Highest priority:
 
 ## Security concerns identified
 
-Full classified list in docs/08_SECURITY.md. Two HIGH findings (unencrypted
-database, unencrypted AI key storage), four MEDIUM findings, several LOW /
+Full classified list in docs/08_SECURITY.md. One current HIGH finding (unencrypted
+database at rest), with historical AI-key concerns superseded because the current app has no external AI key; four MEDIUM findings, several LOW /
 INFORMATIONAL findings (some positive, confirming good practices like
 allowBackup="false" and runtime-only permission requests).
 
 ## Incomplete features identified
 
-- Backup restore (code complete, no UI) — docs/04_FEATURES.md section 14, docs/16_KNOWN_ISSUES.md #3
 - Task recurrence (field exists, no scheduling logic) — docs/16_KNOWN_ISSUES.md #4
 - Task priority/category/description/repeat not exposed in the Add Task dialog — docs/16_KNOWN_ISSUES.md #5
 - AI Assistant chat context — plumbing exists, never populated — docs/16_KNOWN_ISSUES.md #7
@@ -216,3 +215,7 @@ documented — a new developer shouldn't need to "rediscover" any of them.
 ## 2026-09-12 refresh
 
 Documentation was refreshed after the responsive UI/capture/App Lock pass. Current UI changes are recorded in `docs/27_CURRENT_UI_UX_UPDATE.md`; README, Features, Frontend, Known Issues and Changelog were updated. Historical cloud-AI descriptions remain where they document project history, with current-state clarifications added to prevent them being mistaken for active dependencies.
+
+## 2026-09-12 documentation review
+
+The entire `docs/` tree and root `README.md` were reviewed against the current source archive. Relevant documentation was updated for the new Timeline presentation, multiple local math alarms, full-screen Audio Capture and verification limitations. Architecture/database/security documents remain unchanged where the implementation did not change their subject matter; no documentation was deleted or truncated.

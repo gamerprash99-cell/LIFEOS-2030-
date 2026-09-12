@@ -179,3 +179,10 @@ The shared UI system now uses purple/violet tokens, 8dp spacing, 20dp screen pad
 - AI chat uses compact bubbles and a persistent bottom composer rather than a large empty conversation surface.
 - Diary remains a real Room-backed feature and is exposed from Home Quick Actions.
 
+
+## 2026-09-12 UI/UX pass
+
+- **Timeline:** compact day header, five-day selector, complete type filters, vertical time rail and one rounded memory card per event. Photo/video/audio captures retain their existing previews and detail navigation.
+- **Math alarms:** Home now renders a list of user-selected daily times with Add, Edit and Delete actions. The list is stored in DataStore; AlarmManager remains the scheduler.
+- **Audio capture:** Audio opens in the same full-screen Dialog boundary as Photo/Video, with status/navigation insets, a clear recording state, timer, microphone affordance and Stop & Save action.
+- **Architecture:** no navigation, Room, repository, use-case, ViewModel or DI replacement was introduced.

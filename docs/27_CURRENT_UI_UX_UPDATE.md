@@ -58,8 +58,8 @@ Diary was not deleted. The existing `DiaryScreen`, `DiaryViewModel`, `DiaryRepos
 No Room schema change or destructive migration was introduced by this pass.
 
 ## Files changed
-- `app/src/main/java/com/lifeos/app/ui/home/HomeScreen.kt` — responsive Home redesign, quick actions, AI/Capture actions, reduced whitespace.
-- `app/src/main/java/com/lifeos/app/ui/capture/CaptureSheet.kt` — full-screen Photo/Video capture surfaces.
+- `app/src/main/java/com/lifeos/app/ui/home/HomeScreen.kt` — responsive Home redesign, quick actions, AI/Capture actions, reduced whitespace, and multi-alarm controls.
+- `app/src/main/java/com/lifeos/app/ui/capture/CaptureSheet.kt` — full-screen Photo/Video/Audio capture surfaces.
 - `app/src/main/java/com/lifeos/app/ui/capture/CameraCaptureScreen.kt` — device-aware zoom + pinch-to-zoom.
 - `app/src/main/java/com/lifeos/app/ui/capture/VideoCaptureScreen.kt` — device-aware zoom + pinch-to-zoom.
 - `app/src/main/java/com/lifeos/app/ui/ai/AiAssistantScreen.kt` — compact chat UI and animations.
@@ -68,9 +68,36 @@ No Room schema change or destructive migration was introduced by this pass.
 - `app/src/main/java/com/lifeos/app/ui/security/AppLockScreen.kt` — secure unlock readiness/fallback wording.
 - `app/src/main/java/com/lifeos/app/MainActivity.kt` — re-lock App Lock when app leaves foreground.
 - `app/build.gradle.kts` — lifecycle Compose runtime dependency used for lifecycle-aware App Lock gating.
-- `README.md`, `docs/04_FEATURES.md`, `docs/09_FRONTEND.md`, `docs/16_KNOWN_ISSUES.md`, `docs/17_CHANGELOG.md` — current project documentation.
+- `app/src/main/java/com/lifeos/app/ui/timeline/TimelineScreen.kt` — compact memory-card timeline UI.
+- `app/src/main/java/com/lifeos/app/ui/capture/AudioCaptureScreen.kt` — full-screen audio recording UI.
+- `app/src/main/java/com/lifeos/app/core/util/SettingsStore.kt` — additive multi-alarm DataStore storage.
+- `app/src/main/java/com/lifeos/app/core/reminders/AlarmScheduler.kt` — independent daily alarm scheduling.
+- `app/src/main/java/com/lifeos/app/core/reminders/AlarmReceiver.kt` and `BootReceiver.kt` — multi-alarm rescheduling.
+- `README.md`, `docs/04_FEATURES.md`, `docs/09_FRONTEND.md`, `docs/16_KNOWN_ISSUES.md`, `docs/17_CHANGELOG.md`, `docs/26_UI_UX_IMPLEMENTATION.md`, `docs/DOCUMENTATION_AUDIT.md` — current project documentation.
 
 ## Verification
 Static source checks completed after editing: all 100 Kotlin source files were scanned for balanced braces/parentheses, and the manifest/source tree was checked for unexpected network permissions or cloud AI endpoints.
 
 A real Gradle/Android build and emulator/screenshot verification could not be executed because the supplied archive has no `gradlew`/wrapper JAR and the coding environment has neither a Gradle executable nor Android SDK. This is recorded rather than claiming a build passed.
+
+## 2026-09-12 — Timeline, multiple alarms and audio capture polish
+
+### Timeline
+- Reworked the visual hierarchy into a cute, compact memory trail: time rail, dot connector and one rounded card per memory.
+- Added filters for all existing Timeline item types (Notes, Diary, Tasks, Habits, Money, Moments) without changing aggregation or persistence.
+- Kept capture media previews and existing Capture Detail navigation intact.
+
+### Math alarms
+- Replaced the single Home alarm time control with a customizable list of daily times.
+- Users can add, edit and delete multiple times such as 07:00 and 20:00.
+- Existing 06:00-style legacy alarm settings are preserved through a DataStore compatibility fallback; no Room migration is required.
+- AlarmManager now schedules each time independently with stable PendingIntent request codes and re-schedules after boot/time changes and after each alarm fires.
+
+### Audio capture
+- Fixed the half-height presentation: Audio now opens full-screen alongside Photo/Video.
+- Added safe-area-aware header, recording state, elapsed timer, microphone/recording affordance and clear Stop & Save/Cancel actions.
+- Underlying MediaRecorder, app-private storage, repository persistence and Timeline integration are unchanged.
+
+### Verification
+- Static source review completed for changed Kotlin files, manifest and documentation.
+- Real Android Gradle/emulator verification remains unavailable in this archive because `gradlew`/wrapper JAR and a usable Android SDK/Gradle executable are absent. No build/test pass is claimed.

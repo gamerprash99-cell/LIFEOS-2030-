@@ -50,25 +50,71 @@ fun CaptureSheet(onDismiss: () -> Unit) {
         }
     }
 
-    // Camera/video are true full-screen experiences. They no longer sit inside
-    // a partially expanded bottom sheet, so the user never has to drag the UI
-    // upward before the shutter/record controls are reachable.
-    if (mode == CaptureMode.PHOTO || mode == CaptureMode.VIDEO) {
+    // Photo, video and audio are immersive capture experiences. Audio uses the
+    // same full-screen surface so it never opens as a half-height sheet.
+    if (mode == CaptureMode.PHOTO || mode == CaptureMode.VIDEO || mode == CaptureMode.AUDIO || mode == CaptureMode.CONFIRM) {
         Dialog(
-            onDismissRequest = { mode = CaptureMode.MENU },
+            onDismissRequest = { if (mode == CaptureMode.CONFIRM) onDismiss() else mode = CaptureMode.MENU },
             properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
         ) {
             Box(Modifier.fillMaxSize()) {
-                if (mode == CaptureMode.PHOTO) {
-                    CameraCaptureScreen(
+                when (mode) {
+                    CaptureMode.PHOTO -> CameraCaptureScreen(
                         onCaptured = { save(CaptureType.PHOTO, it, null, true) },
                         onCancel = { mode = CaptureMode.MENU }
                     )
-                } else {
-                    VideoCaptureScreen(
+                    CaptureMode.VIDEO -> VideoCaptureScreen(
                         onCaptured = { save(CaptureType.VIDEO, it, null, true) },
                         onCancel = { mode = CaptureMode.MENU }
                     )
+                    CaptureMode.AUDIO -> AudioCaptureScreen(
+                        onCaptured = { save(CaptureType.AUDIO, it, null, true) },
+                        onCancel = { mode = CaptureMode.MENU }
+                    )
+                    CaptureMode.CONFIRM -> {
+                        val c = captured
+                        Column(
+                            Modifier.fillMaxSize().navigationBarsPadding().padding(20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            LifeOSCard {
+                                Column(
+                                    Modifier.fillMaxWidth().padding(18.dp),
+                                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Filled.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
+                                        Spacer(Modifier.width(10.dp))
+                                        Column {
+                                            Text("Saved to Timeline", style = MaterialTheme.typography.titleLarge)
+                                            Text(
+                                                when (c?.type) {
+                                                    CaptureType.PHOTO -> "Photo ready"
+                                                    CaptureType.VIDEO -> "Video ready"
+                                                    CaptureType.AUDIO -> "Audio ready"
+                                                    else -> "Thought saved"
+                                                },
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                    c?.filePath?.let {
+                                        when (c.type) {
+                                            CaptureType.PHOTO -> PhotoPreview(it)
+                                            CaptureType.VIDEO -> VideoPreview(it)
+                                            CaptureType.AUDIO -> AudioPreview(it)
+                                            else -> Unit
+                                        }
+                                    }
+                                    Text("Your original file stays on this device.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text("Done") }
+                                }
+                            }
+                        }
+                    }
+                    else -> Unit
                 }
             }
         }
@@ -81,89 +127,41 @@ fun CaptureSheet(onDismiss: () -> Unit) {
         shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
         dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
-        when (mode) {
-            CaptureMode.MENU -> Column(
-                Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp).padding(bottom = 18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+        Column(
+            Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp).padding(bottom = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text("Capture a moment", style = MaterialTheme.typography.headlineSmall)
+            Text(
+                "Save a thought, photo, video or audio to your Timeline.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            OutlinedTextField(
+                value = thought,
+                onValueChange = { thought = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Jot a quick thought…") },
+                minLines = 2,
+                maxLines = 4
+            )
+            Button(
+                enabled = thought.isNotBlank(),
+                onClick = { save(CaptureType.THOUGHT, null, thought, true) },
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Capture a moment", style = MaterialTheme.typography.headlineSmall)
-                Text(
-                    "Save a thought, photo, video or audio to your Timeline.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                OutlinedTextField(
-                    value = thought,
-                    onValueChange = { thought = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Jot a quick thought…") },
-                    minLines = 2,
-                    maxLines = 4
-                )
-                Button(
-                    enabled = thought.isNotBlank(),
-                    onClick = { save(CaptureType.THOUGHT, null, thought, true) },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Filled.Save, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Save thought")
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    CaptureTypeButton(Icons.Filled.CameraAlt, "Photo") { mode = CaptureMode.PHOTO }
-                    CaptureTypeButton(Icons.Filled.Videocam, "Video") { mode = CaptureMode.VIDEO }
-                    CaptureTypeButton(Icons.Filled.Mic, "Audio") { mode = CaptureMode.AUDIO }
-                }
+                Icon(Icons.Filled.Save, null)
+                Spacer(Modifier.width(8.dp))
+                Text("Save thought")
             }
-            CaptureMode.AUDIO -> Column(
-                Modifier.fillMaxWidth().navigationBarsPadding().padding(20.dp)
-            ) {
-                AudioCaptureScreen(
-                    onCaptured = { save(CaptureType.AUDIO, it, null, true) },
-                    onCancel = { mode = CaptureMode.MENU }
-                )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                CaptureTypeButton(Icons.Filled.CameraAlt, "Photo") { mode = CaptureMode.PHOTO }
+                CaptureTypeButton(Icons.Filled.Videocam, "Video") { mode = CaptureMode.VIDEO }
+                CaptureTypeButton(Icons.Filled.Mic, "Audio") { mode = CaptureMode.AUDIO }
             }
-            CaptureMode.CONFIRM -> {
-                val c = captured
-                Column(
-                    Modifier.fillMaxWidth().navigationBarsPadding().padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    LifeOSCard {
-                        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
-                            Spacer(Modifier.width(10.dp))
-                            Column {
-                                Text("Saved to Timeline", style = MaterialTheme.typography.titleLarge)
-                                Text(
-                                    when (c?.type) {
-                                        CaptureType.PHOTO -> "Photo ready"
-                                        CaptureType.VIDEO -> "Video ready"
-                                        CaptureType.AUDIO -> "Audio ready"
-                                        else -> "Thought saved"
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                    c?.filePath?.let {
-                        when (c.type) {
-                            CaptureType.PHOTO -> PhotoPreview(it)
-                            CaptureType.VIDEO -> VideoPreview(it)
-                            CaptureType.AUDIO -> AudioPreview(it)
-                            else -> Unit
-                        }
-                    }
-                    Text("Your original file stays on this device.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text("Done") }
-                }
-            }
-            else -> Unit
         }
     }
+
 }
 
 @Composable

@@ -4,7 +4,6 @@ import android.app.AlarmManager
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -26,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -34,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lifeos.app.core.di.LambdaViewModelFactory
 import com.lifeos.app.core.di.LocalServiceLocator
 import com.lifeos.app.core.reminders.AlarmScheduler
+import com.lifeos.app.core.util.DailyAlarm
 import com.lifeos.app.core.util.DateTimeUtils
 import com.lifeos.app.core.util.rememberPermissionState
 import com.lifeos.app.data.db.entities.CaptureType
@@ -442,63 +441,115 @@ private fun MorningCheckInCard(onClick: () -> Unit) {
 private fun HomeAlarmCard() {
     val locator = LocalServiceLocator.current
     val context = androidx.compose.ui.platform.LocalContext.current
-    val enabled by locator.settingsStore.alarmEnabled.collectAsState(initial = false)
-    val hour by locator.settingsStore.alarmHour.collectAsState(initial = 6)
-    val minute by locator.settingsStore.alarmMinute.collectAsState(initial = 0)
+    val alarms by locator.settingsStore.alarmTimes.collectAsState(initial = emptyList())
     var showTimePicker by remember { mutableStateOf(false) }
+    var editingAlarm by remember { mutableStateOf<DailyAlarm?>(null) }
     val scope = rememberCoroutineScope()
     val notificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS) else null
     val exactAllowed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms() else true
-    val iconScale by animateFloatAsState(if (enabled) 1.05f else 1f, label = "alarm_scale")
+
+    fun saveAlarms(updated: List<DailyAlarm>) {
+        val normalized = updated.distinctBy { it.minutesSinceMidnight }.sortedBy { it.minutesSinceMidnight }
+        scope.launch {
+            locator.settingsStore.setAlarmTimes(normalized)
+            AlarmScheduler.replaceDaily(context, alarms, normalized)
+        }
+    }
 
     LifeOSCard {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                LifeOSIconBadge(Icons.Filled.Alarm, Modifier.graphicsLayer { scaleX = iconScale; scaleY = iconScale })
+                LifeOSIconBadge(Icons.Filled.Alarm)
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text("Math alarm", style = MaterialTheme.typography.titleMedium)
-                    Text("Solve a fresh + / − problem to stop it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Math alarms", style = MaterialTheme.typography.titleMedium)
+                    Text("Add as many daily alarms as you need", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(enabled, onCheckedChange = { checked ->
-                    if (checked && notificationPermission != null && !notificationPermission.isGranted) notificationPermission.request()
-                    scope.launch {
-                        locator.settingsStore.setAlarm(checked, hour, minute)
-                        if (checked) AlarmScheduler.scheduleDaily(context, hour, minute) else AlarmScheduler.cancel(context)
+                Switch(
+                    checked = alarms.isNotEmpty(),
+                    onCheckedChange = { checked ->
+                        if (checked) {
+                            if (notificationPermission != null && !notificationPermission.isGranted) notificationPermission.request()
+                            if (alarms.isEmpty()) {
+                                val defaultAlarm = DailyAlarm(6, 0)
+                                saveAlarms(listOf(defaultAlarm))
+                            }
+                        } else {
+                            saveAlarms(emptyList())
+                        }
                     }
-                })
+                )
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(String.format(Locale.getDefault(), "%02d:%02d", hour, minute), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.width(10.dp))
-                Text("Every day", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(Modifier.weight(1f))
-                FilledTonalButton(onClick = { showTimePicker = true }) { Text("Change") }
+
+            if (alarms.isEmpty()) {
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .38f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.AddAlarm, null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(10.dp))
+                        Text("No alarms set. Turn this on or add your first alarm.", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            } else {
+                alarms.forEach { alarm ->
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .30f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(Modifier.padding(start = 14.dp, end = 8.dp, top = 10.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary.copy(alpha = .12f), modifier = Modifier.size(40.dp)) {
+                                Box(contentAlignment = Alignment.Center) { Icon(Icons.Filled.Alarm, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp)) }
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(String.format(Locale.getDefault(), "%02d:%02d", alarm.hour, alarm.minute), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                Text("Every day · math challenge", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            IconButton(onClick = { editingAlarm = alarm; showTimePicker = true }) { Icon(Icons.Filled.Edit, "Edit alarm") }
+                            IconButton(onClick = { saveAlarms(alarms.filterNot { it.minutesSinceMidnight == alarm.minutesSinceMidnight }) }) { Icon(Icons.Filled.DeleteOutline, "Delete alarm") }
+                        }
+                    }
+                }
+                OutlinedButton(
+                    onClick = { editingAlarm = null; showTimePicker = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Filled.AddAlarm, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Add another alarm")
+                }
             }
-            AnimatedVisibility(enabled) {
-                Text("The alarm stays active until the answer is correct.", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-            }
-            if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !exactAllowed) {
+
+            if (alarms.isNotEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !exactAllowed) {
                 TextButton(onClick = {
                     context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply { data = android.net.Uri.parse("package:${context.packageName}") })
                 }) { Text("Allow exact alarm timing") }
             }
         }
     }
+
     if (showTimePicker) {
-        val state = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = true)
+        val initial = editingAlarm ?: DailyAlarm(6, 0)
+        val state = rememberTimePickerState(initialHour = initial.hour, initialMinute = initial.minute, is24Hour = false)
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
-            title = { Text("Set daily math alarm") },
+            title = { Text(if (editingAlarm == null) "Add daily math alarm" else "Edit daily math alarm") },
             text = { TimePicker(state = state) },
-            confirmButton = { TextButton(onClick = {
-                showTimePicker = false
-                scope.launch {
-                    locator.settingsStore.setAlarm(true, state.hour, state.minute)
-                    AlarmScheduler.scheduleDaily(context, state.hour, state.minute)
-                }
-            }) { Text("Set alarm") } },
-            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancel") } }
+            confirmButton = {
+                TextButton(onClick = {
+                    val picked = DailyAlarm(state.hour, state.minute)
+                    val updated = if (editingAlarm == null) alarms + picked else alarms.map { if (it.minutesSinceMidnight == editingAlarm!!.minutesSinceMidnight) picked else it }
+                    showTimePicker = false
+                    editingAlarm = null
+                    if (notificationPermission != null && !notificationPermission.isGranted) notificationPermission.request()
+                    saveAlarms(updated)
+                }) { Text("Save alarm") }
+            },
+            dismissButton = { TextButton(onClick = { showTimePicker = false; editingAlarm = null }) { Text("Cancel") } }
         )
     }
 }

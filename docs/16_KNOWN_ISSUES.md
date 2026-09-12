@@ -184,3 +184,17 @@ does not change that Android platform behavior.
 ### Environment limitation
 The current archive still lacks the Gradle wrapper scripts and the coding environment has no Gradle executable/Android SDK, so these changes could not be verified by a real APK build or emulator screenshot run in this environment.
 
+
+### Issue #14 — [RESOLVED] Audio capture opened in a half-height surface
+
+- **Severity**: Was 🟠 Medium (UX)
+- **Description**: Audio was rendered inside the capture bottom sheet, so the recording screen appeared only in the lower portion of the device.
+- **Fix**: Audio now uses the same full-screen Dialog boundary as Photo/Video and applies status/navigation insets. The existing MediaRecorder and persistence path are unchanged.
+- **Status**: Resolved 2026-09-12.
+
+### Issue #15 — [RESOLVED] Daily math alarm supported only one time
+
+- **Severity**: Was 🟠 Medium (feature usability)
+- **Description**: The previous Home alarm UI stored one hour/minute pair, preventing schedules such as 07:00 and 20:00 at the same time.
+- **Fix**: Added a locally persisted list of daily times with Add/Edit/Delete UI and independent AlarmManager PendingIntents. Existing single-alarm keys remain a migration fallback.
+- **Status**: Resolved 2026-09-12.

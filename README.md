@@ -12,7 +12,7 @@ detailed source going forward.
 
 ## Current project snapshot — 2026-09-12
 
-The latest pass is a UI/UX and stability update across Timeline, Tasks, Home, App Lock, alarm, capture, video playback, backup/restore and onboarding. Existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and the LifeOS color identity are preserved. The current Intelligence Engine is local/offline; no external AI API or API key is required. No Room schema change or destructive migration was introduced.
+The 2026-09-12 pass keeps the existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and all existing features. Timeline now presents every daily memory as a compact rounded card on a cute time rail; the Home Math Alarm supports multiple customizable daily times such as 07:00 and 20:00 using local DataStore + AlarmManager; and Audio Capture now opens full-screen with safe-area-aware recording controls. The Intelligence Engine remains local/offline; no external AI API or API key is required. No Room schema change or destructive migration was introduced.
 
 ---
 
@@ -418,5 +418,5 @@ This pass fixes the real-device issues reported after the previous UI redesign. 
 - Manifest XML was parsed successfully.
 - A rough Kotlin source brace/syntax-structure scan completed without unbalanced source blocks.
 - The supplied project still uses its existing Gradle/Android stack; no replacement architecture or language was introduced.
-- Final device verification should cover: Home → Expenses → Home, Home → Timeline → Capture Detail → Home, video fullscreen rotation/seek, biometric setup/unlock, PIN recovery, export to Downloads, restore from a selected JSON backup, 6:00-style daily alarm, and Morning Check-in capture.
+- Final device verification should cover: Home → Expenses → Home, Home → Timeline → Capture Detail → Home, video fullscreen rotation/seek, biometric setup/unlock, PIN recovery, export to Downloads, restore from a selected JSON backup, multiple daily math alarms (for example 07:00 and 20:00), and Morning Check-in capture.
 

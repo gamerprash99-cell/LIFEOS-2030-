@@ -71,6 +71,7 @@ Full inventory of every implemented feature, with exact file paths.
 
 - **Files**: `ui/timeline/TimelineScreen.kt` (date navigation with previous/next arrows), `domain/usecase/BuildTimelineUseCase.kt` (the aggregation logic)
 - **How it works**: Not a database table — `BuildTimelineUseCase` queries all six repositories for a given day and merges the results into `domain/model/TimelineItem.kt` objects, sorted by `timeMinutes`.
+- **UI**: A compact five-day strip, type filters for all six memory types, a vertical time rail, rounded memory cards, and media-aware capture cards.
 - **Status**: Implemented
 
 ## 7. Global Search
@@ -99,7 +100,7 @@ Full inventory of every implemented feature, with exact file paths.
 - **Database**: `data/db/entities/CaptureEntity.kt`, `data/repository/CaptureRepository.kt` (now includes `getById()`, a minimal additive read method added for the Detail screen — no schema change)
 - **Post-capture confirmation**: after a Photo/Video/Audio capture, `CaptureSheet` shows a CONFIRM state with a real preview of the captured file before closing, instead of dismissing silently.
 - **Timeline integration**: tapping a capture item in `TimelineScreen.kt` now opens `CaptureDetailScreen`, showing the real preview, date/time, and a Delete action.
-- **Status**: Implemented (all four capture types are real, working code, not stubs; post-capture confirmation and a Detail/viewer screen were added)
+- **Status**: Implemented (all four capture types are real, working code, not stubs; Photo/Video/Audio use immersive full-screen capture surfaces; post-capture confirmation and a Detail/viewer screen remain)
 
 ## 10. AI Assistant (Chat)
 
@@ -170,8 +171,11 @@ challenge before the alarm can be dismissed.
   `core/reminders/AlarmReceiver.kt`,
   `ui/settings/AlarmChallengeActivity.kt`,
   `ui/settings/SettingsScreen.kt`
-- **Scheduling**: Android `AlarmManager`, with daily rescheduling after the
-  alarm fires.
+- **Scheduling**: Android `AlarmManager`; multiple daily times are persisted
+  in DataStore and scheduled independently. Existing single-alarm settings are
+  migrated in-place on read, so the user's old alarm is preserved.
+- **UI**: Home exposes add/edit/delete for as many daily alarm times as the user
+  wants (for example 07:00 and 20:00).
 - **Challenge**: A fresh addition or subtraction problem is generated for
   each alarm instance. Operands and the answer are kept within the small
   requested range, and the answer field is limited to two digits.

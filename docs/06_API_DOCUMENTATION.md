@@ -1,6 +1,6 @@
 # API / Integration Documentation
 
-> **Current status — 2026-09-11:** Released LifeOS has **no external HTTP/API integration**. This page is intentionally kept short so old provider documentation cannot be mistaken for the current architecture.
+> **Current status — 2026-09-12:** Released LifeOS has **no external HTTP/API integration**. This page is intentionally kept short so old provider documentation cannot be mistaken for the current architecture.
 
 ## Local application interfaces
 

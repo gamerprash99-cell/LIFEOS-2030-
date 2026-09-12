@@ -5,20 +5,50 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import com.lifeos.app.core.util.DailyAlarm
 import com.lifeos.app.core.util.SettingsStore
 import kotlinx.coroutines.flow.first
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-/** Daily alarm scheduler. Uses exact alarms when Android permits them and falls back safely otherwise. */
+/** Daily math-alarm scheduler. Supports multiple independent times without changing Room. */
 object AlarmScheduler {
-    private const val REQUEST_CODE = 7301
+    private const val REQUEST_CODE_BASE = 7301
     private const val ACTION = "com.lifeos.app.action.DAILY_ALARM"
+    private const val EXTRA_HOUR = "extra_hour"
+    private const val EXTRA_MINUTE = "extra_minute"
 
-    fun scheduleDaily(context: Context, hour: Int, minute: Int) {
+    fun scheduleDaily(context: Context, hour: Int, minute: Int) = schedule(context, DailyAlarm(hour, minute))
+
+    fun scheduleAll(context: Context, alarms: List<DailyAlarm>) {
+        alarms.distinctBy { it.minutesSinceMidnight }.forEach { schedule(context, it) }
+    }
+
+    fun replaceDaily(context: Context, previous: List<DailyAlarm>, updated: List<DailyAlarm>) {
+        previous.distinctBy { it.minutesSinceMidnight }.forEach { cancel(context, it) }
+        scheduleAll(context, updated)
+    }
+
+    fun cancel(context: Context) {
+        // Keep this compatibility method for existing callers: cancel the legacy default slot.
+        cancel(context, DailyAlarm(6, 0))
+    }
+
+    fun cancelAll(context: Context, alarms: List<DailyAlarm>) {
+        alarms.distinctBy { it.minutesSinceMidnight }.forEach { cancel(context, it) }
+    }
+
+    fun rescheduleFromSettings(context: Context) {
+        kotlinx.coroutines.runBlocking {
+            val alarms = SettingsStore(context).alarmTimes.first()
+            scheduleAll(context, alarms)
+        }
+    }
+
+    private fun schedule(context: Context, alarm: DailyAlarm) {
         val alarmManager = context.getSystemService(AlarmManager::class.java)
-        val trigger = nextTrigger(hour, minute)
-        val pendingIntent = pendingIntent(context)
+        val trigger = nextTrigger(alarm.hour, alarm.minute)
+        val pendingIntent = pendingIntent(context, alarm)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && alarmManager.canScheduleExactAlarms()) {
             alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
         } else {
@@ -26,21 +56,17 @@ object AlarmScheduler {
         }
     }
 
-    fun cancel(context: Context) {
-        context.getSystemService(AlarmManager::class.java).cancel(pendingIntent(context))
+    private fun cancel(context: Context, alarm: DailyAlarm) {
+        context.getSystemService(AlarmManager::class.java).cancel(pendingIntent(context, alarm))
     }
 
-    fun rescheduleFromSettings(context: Context) {
-        kotlinx.coroutines.runBlocking {
-            val store = SettingsStore(context)
-            if (store.alarmEnabled.first()) scheduleDaily(context, store.alarmHour.first(), store.alarmMinute.first())
-        }
-    }
-
-    private fun pendingIntent(context: Context): PendingIntent = PendingIntent.getBroadcast(
+    private fun pendingIntent(context: Context, alarm: DailyAlarm): PendingIntent = PendingIntent.getBroadcast(
         context,
-        REQUEST_CODE,
-        Intent(context, AlarmReceiver::class.java).setAction(ACTION),
+        REQUEST_CODE_BASE + alarm.minutesSinceMidnight,
+        Intent(context, AlarmReceiver::class.java)
+            .setAction(ACTION)
+            .putExtra(EXTRA_HOUR, alarm.hour)
+            .putExtra(EXTRA_MINUTE, alarm.minute),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 

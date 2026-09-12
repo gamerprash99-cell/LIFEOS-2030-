@@ -23,6 +23,23 @@
 > **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
 
 
+## 2026-09-12 — Timeline, multiple alarms and audio capture UX
+
+### Changed
+- Redesigned the Timeline as a compact chronological memory trail with rounded cards, a time rail and filters covering every existing Timeline type.
+- Replaced the single Home math-alarm slot with a user-managed list of daily alarm times. Add/edit/delete is persisted locally in DataStore and scheduled through the existing AlarmManager.
+- Kept legacy single-alarm DataStore keys as a compatibility fallback so an existing alarm is not lost.
+- Moved Audio Capture into the same full-screen capture boundary as Photo/Video and refreshed its recording UI for clearer status and safe-area behavior.
+
+### Preserved
+- Kotlin + Jetpack Compose + Material 3, Room, repositories/use cases, ViewModels, manual ServiceLocator and Compose Navigation.
+- Existing Timeline aggregation, capture persistence, media storage and math-challenge behavior.
+- Offline-first/privacy-first design; no network or external AI dependency was added.
+- No Room schema change or destructive migration.
+
+### Verification
+- Static source checks completed. Android build/emulator verification is still pending because the supplied archive has no Gradle wrapper/JAR and this environment has no usable Android SDK/Gradle executable.
+
 ## 2026-09-11 — Timeline, Tasks, Home alarm, biometric and capture polish
 
 ### Changed

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.lifeos.app.core.security.PinHasher
 import kotlinx.coroutines.flow.Flow
@@ -13,6 +14,10 @@ import kotlinx.coroutines.flow.map
 private val Context.dataStore by preferencesDataStore(name = "lifeos_settings")
 
 enum class AppLockType { NONE, BIOMETRIC, PIN }
+
+data class DailyAlarm(val hour: Int, val minute: Int) {
+    val minutesSinceMidnight: Int get() = hour * 60 + minute
+}
 
 /**
  * Central app settings — Section 59 (Settings screen). No settings are
@@ -39,6 +44,7 @@ class SettingsStore(private val context: Context) {
         val ALARM_ENABLED = booleanPreferencesKey("alarm_enabled")
         val ALARM_HOUR = androidx.datastore.preferences.core.intPreferencesKey("alarm_hour")
         val ALARM_MINUTE = androidx.datastore.preferences.core.intPreferencesKey("alarm_minute")
+        val ALARM_TIMES = stringSetPreferencesKey("alarm_times")
     }
 
     val darkThemeEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.DARK_THEME_ENABLED] ?: false }
@@ -52,15 +58,48 @@ class SettingsStore(private val context: Context) {
     val alarmEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.ALARM_ENABLED] ?: false }
     val alarmHour: Flow<Int> = context.dataStore.data.map { it[Keys.ALARM_HOUR] ?: 6 }
     val alarmMinute: Flow<Int> = context.dataStore.data.map { it[Keys.ALARM_MINUTE] ?: 0 }
+    /** Multiple daily alarms, persisted in DataStore. The legacy single-alarm keys are
+     * retained so existing installs migrate without losing the user's current alarm. */
+    val alarmTimes: Flow<List<DailyAlarm>> = context.dataStore.data.map { prefs ->
+        val stored = prefs[Keys.ALARM_TIMES].orEmpty()
+            .mapNotNull { value ->
+                val parts = value.split(":")
+                if (parts.size != 2) return@mapNotNull null
+                val hour = parts[0].toIntOrNull()?.coerceIn(0, 23) ?: return@mapNotNull null
+                val minute = parts[1].toIntOrNull()?.coerceIn(0, 59) ?: return@mapNotNull null
+                DailyAlarm(hour, minute)
+            }
+            .distinctBy { it.minutesSinceMidnight }
+            .sortedBy { it.minutesSinceMidnight }
+        if (stored.isNotEmpty()) stored
+        else if (prefs[Keys.ALARM_ENABLED] == true) listOf(DailyAlarm(prefs[Keys.ALARM_HOUR] ?: 6, prefs[Keys.ALARM_MINUTE] ?: 0))
+        else emptyList()
+    }
 
     suspend fun setDarkThemeEnabled(enabled: Boolean) = context.dataStore.edit { it[Keys.DARK_THEME_ENABLED] = enabled }
     suspend fun setOnboardingComplete(complete: Boolean) = context.dataStore.edit { it[Keys.ONBOARDING_COMPLETE] = complete }
     suspend fun setAiFeaturesEnabled(enabled: Boolean) = context.dataStore.edit { it[Keys.AI_FEATURES_ENABLED] = enabled }
 
-    suspend fun setAlarm(enabled: Boolean, hour: Int, minute: Int) = context.dataStore.edit {
-        it[Keys.ALARM_ENABLED] = enabled
-        it[Keys.ALARM_HOUR] = hour.coerceIn(0, 23)
-        it[Keys.ALARM_MINUTE] = minute.coerceIn(0, 59)
+    suspend fun setAlarm(enabled: Boolean, hour: Int, minute: Int) = setAlarmTimes(
+        if (enabled) listOf(DailyAlarm(hour.coerceIn(0, 23), minute.coerceIn(0, 59))) else emptyList()
+    )
+
+    suspend fun setAlarmTimes(times: List<DailyAlarm>) {
+        val normalized = times
+            .map { DailyAlarm(it.hour.coerceIn(0, 23), it.minute.coerceIn(0, 59)) }
+            .distinctBy { it.minutesSinceMidnight }
+            .sortedBy { it.minutesSinceMidnight }
+        context.dataStore.edit { prefs ->
+            if (normalized.isEmpty()) {
+                prefs[Keys.ALARM_ENABLED] = false
+                prefs.remove(Keys.ALARM_TIMES)
+            } else {
+                prefs[Keys.ALARM_ENABLED] = true
+                prefs[Keys.ALARM_HOUR] = normalized.first().hour
+                prefs[Keys.ALARM_MINUTE] = normalized.first().minute
+                prefs[Keys.ALARM_TIMES] = normalized.map { "%02d:%02d".format(it.hour, it.minute) }.toSet()
+            }
+        }
     }
 
     /** Enables biometric-only App Lock. Caller must have already verified a successful BiometricPrompt auth before calling this. */
