@@ -3,6 +3,7 @@ package com.lifeos.app.ui.onboarding
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,7 +14,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.lifeos.app.ui.components.LifeOSIconBadge
 import com.lifeos.app.ui.components.LifeOSCard
 
 private data class OnboardingPage(val emoji: String, val title: String, val body: String)
@@ -28,11 +28,10 @@ private val PAGES = listOf(
 @Composable
 fun OnboardingScreen(onFinish: () -> Unit, onRestoreBackup: (() -> Unit)? = null, restoreStatus: String? = null) {
     var pageIndex by remember { mutableIntStateOf(0) }
-    val page = PAGES[pageIndex]
     val isLast = pageIndex == PAGES.lastIndex
 
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        AnimatedContent(targetState = pageIndex, transitionSpec = { fadeIn(tween(220)) + slideInVertically(tween(260), initialOffsetY = { it / 8 }) }, label = "onboarding_page") { index ->
+        AnimatedContent(targetState = pageIndex, transitionSpec = { fadeIn(tween(220)) togetherWith slideInVertically(tween(260), initialOffsetY = { it / 8 }) }, label = "onboarding_page") { index ->
             val current = PAGES[index]
             LifeOSCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -42,19 +41,15 @@ fun OnboardingScreen(onFinish: () -> Unit, onRestoreBackup: (() -> Unit)? = null
                 }
             }
         }
-
         Row(Modifier.padding(top = 18.dp), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             PAGES.indices.forEach { index ->
                 Surface(shape = RoundedCornerShape(50), color = if (index == pageIndex) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(if (index == pageIndex) 22.dp else 8.dp, 8.dp)) {}
             }
         }
-
         Column(Modifier.fillMaxWidth().padding(top = 26.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { if (isLast) onFinish() else pageIndex++ }, Modifier.fillMaxWidth()) { Text(if (isLast) "Get started" else "Next") }
             if (onRestoreBackup != null) {
-                OutlinedButton(onClick = { onRestoreBackup?.invoke() }, Modifier.fillMaxWidth()) {
-                    Icon(Icons.Filled.FolderOpen, null); Spacer(Modifier.width(8.dp)); Text("Restore a LifeOS backup")
-                }
+                OutlinedButton(onClick = { onRestoreBackup() }, Modifier.fillMaxWidth()) { Icon(Icons.Filled.FolderOpen, null); Spacer(Modifier.width(8.dp)); Text("Restore a LifeOS backup") }
                 Text("Already used LifeOS? Restore your exported JSON backup here.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.align(Alignment.CenterHorizontally))
             }
             if (!isLast) TextButton(onClick = onFinish, Modifier.fillMaxWidth()) { Text("Skip") }
