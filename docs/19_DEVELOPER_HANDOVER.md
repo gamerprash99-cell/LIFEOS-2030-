@@ -157,3 +157,7 @@ Whenever a feature, API, database structure, dependency, architecture,
 deployment process, or security mechanism changes, the relevant file(s) in
 /docs must be updated in the same PR. Documentation that silently drifts
 from the code is worse than no documentation, because it's actively misleading.
+
+## 2026-09-12 current note
+
+The current AI path is fully local: `core/ai/AiRepository.kt` delegates to `core/intelligence/LifeOSIntelligenceEngine`. Do not expect or restore `AiClient.kt`.

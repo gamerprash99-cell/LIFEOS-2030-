@@ -108,3 +108,7 @@ USER taps "Export backup" in Settings
 - No data leaves the device except: (a) the specific text sent per AI call
   as documented in docs/11_AI_SYSTEM.md, and (b) a backup file the user
   explicitly chooses to share via the system share sheet.
+
+## 2026-09-12 current note
+
+Current AI data flow ends at the local `LifeOSIntelligenceEngine`; there is no outbound HTTP hop. Historical network flow text is retained below for traceability.

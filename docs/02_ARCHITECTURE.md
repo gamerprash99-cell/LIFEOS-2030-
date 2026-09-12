@@ -182,3 +182,7 @@ Full ADRs are in `docs/24_ARCHITECTURAL_DECISIONS.md`. Headlines:
    "timeline" table, explicitly to avoid data drift (see the file's doc comment).
 4. **AI is opt-in and reviewable, never silent** (`ADR-004`) — every AI
    write path requires a UI confirmation step before touching the database.
+
+## 2026-09-12 current architecture clarification
+
+The current source tree has no `AiClient.kt`, HTTP client, or outbound AI request path. The local path is `ui → ViewModel → AiRepository → LifeOSIntelligenceEngine` plus existing repositories for real app data. Historical cloud-AI descriptions earlier in this document are preserved as history, not as current implementation requirements.

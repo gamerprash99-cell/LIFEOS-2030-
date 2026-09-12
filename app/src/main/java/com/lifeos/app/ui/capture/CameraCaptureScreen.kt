@@ -6,6 +6,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -49,7 +51,10 @@ fun CameraCaptureScreen(onCaptured: (String) -> Unit, onCancel: () -> Unit) {
     var lens by remember { mutableStateOf(CameraSelector.LENS_FACING_BACK) }
     var zoom by remember { mutableFloatStateOf(1f) }
     var boundCamera by remember { mutableStateOf<Camera?>(null) }
-    val zoomLevels = listOf(1f, 2f, 3f)
+    val zoomRange = boundCamera?.cameraInfo?.zoomState?.value
+    val maxZoom = zoomRange?.maxZoomRatio ?: 1f
+    val minZoom = zoomRange?.minZoomRatio ?: 1f
+    val zoomLevels = listOf(1f, 2f, 3f).filter { it in minZoom..maxZoom }.ifEmpty { listOf(1f.coerceIn(minZoom, maxZoom)) }
 
     LaunchedEffect(lens) {
         val future = ProcessCameraProvider.getInstance(context)
@@ -64,10 +69,21 @@ fun CameraCaptureScreen(onCaptured: (String) -> Unit, onCancel: () -> Unit) {
         }, ContextCompat.getMainExecutor(context))
     }
 
-    LaunchedEffect(boundCamera, zoom) { boundCamera?.cameraControl?.setZoomRatio(zoom) }
+    LaunchedEffect(boundCamera, zoom, minZoom, maxZoom) {
+        val safeZoom = zoom.coerceIn(minZoom, maxZoom)
+        if (safeZoom != zoom) zoom = safeZoom
+        boundCamera?.cameraControl?.setZoomRatio(safeZoom)
+    }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
-        AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
+        AndroidView(
+            factory = { previewView },
+            modifier = Modifier.fillMaxSize().pointerInput(boundCamera, minZoom, maxZoom) {
+                detectTransformGestures { _, _, zoomChange, _ ->
+                    zoom = (zoom * zoomChange).coerceIn(minZoom, maxZoom)
+                }
+            }
+        )
         CaptureTopBar(title = "Photo", onClose = onCancel)
         ZoomSelector(zoom = zoom, levels = zoomLevels, onZoom = { zoom = it })
         Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp, vertical = 18.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -79,7 +95,7 @@ fun CameraCaptureScreen(onCaptured: (String) -> Unit, onCancel: () -> Unit) {
                     override fun onError(e: ImageCaptureException) = Toast.makeText(context, "Capture failed: ${e.message}", Toast.LENGTH_SHORT).show()
                 })
             }, modifier = Modifier.size(78.dp), colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primary)) { Icon(Icons.Filled.Camera, "Take photo", modifier = Modifier.size(34.dp)) }
-            CaptureRoundButton(Icons.Filled.FlipCameraAndroid, "Reset zoom") { zoom = 1f }
+            CaptureRoundButton(Icons.Filled.FlipCameraAndroid, "Reset zoom") { zoom = 1f.coerceIn(minZoom, maxZoom) }
         }
     }
 }
@@ -99,7 +115,7 @@ private fun ZoomSelector(zoom: Float, levels: List<Float>, onZoom: (Float) -> Un
         Surface(shape = RoundedCornerShape(22.dp), color = Color.Black.copy(alpha = .55f), modifier = Modifier.animateContentSize()) {
             Row(Modifier.padding(4.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                 levels.forEach { level ->
-                    val selected = zoom == level
+                    val selected = kotlin.math.abs(zoom - level) < 0.05f
                     Surface(onClick = { onZoom(level) }, shape = CircleShape, color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent, contentColor = Color.White, modifier = Modifier.size(42.dp)) {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(if (level == 1f) "1×" else "${level.toInt()}×", style = MaterialTheme.typography.labelLarge) }
                     }

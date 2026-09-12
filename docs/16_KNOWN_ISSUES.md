@@ -172,3 +172,15 @@ does not change that Android platform behavior.
 - The supplied source archive does not include `gradlew`/`gradlew.bat`, so `assembleDebug`, unit tests, instrumentation tests and lint cannot be truthfully reported as executed from this archive.
 - The archive has no `.git` directory, so Git status/recent-commit verification is unavailable here.
 - Backup JSON restores database records and capture metadata; binary photo/video/audio files are not embedded in the JSON backup. Media backup should therefore be treated as a separate future product decision rather than silently assumed to be restored.
+
+## 2026-09-12 verification/update note
+
+### Resolved in source
+- **Capture half-open/drag UX:** Photo and Video now open as full-screen camera surfaces rather than occupying a partially expanded bottom sheet.
+- **Unsupported camera zoom values:** zoom choices are derived from the active camera's real min/max zoom range and pinch-to-zoom is supported.
+- **Biometric setup compatibility:** the App Lock adapter now supports strong biometric plus secure device credential fallback, and the app gate re-locks when the app leaves the foreground.
+- **Diary discoverability:** Diary remains implemented; Home Quick Actions now exposes it directly.
+
+### Environment limitation
+The current archive still lacks the Gradle wrapper scripts and the coding environment has no Gradle executable/Android SDK, so these changes could not be verified by a real APK build or emulator screenshot run in this environment.
+

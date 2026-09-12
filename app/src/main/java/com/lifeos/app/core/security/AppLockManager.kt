@@ -7,14 +7,21 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 
 /**
- * Thin adapter around Android's real biometric UI. LifeOS never reads or stores
- * biometric data; Android owns enrollment and verification.
+ * Thin adapter around Android's real biometric/device credential UI.
+ * LifeOS never reads or stores biometric data; Android owns enrollment and
+ * verification. Device credential is allowed as a platform fallback on
+ * devices where a strong biometric is unavailable.
  */
 class AppLockManager(private val context: Context) {
+    private val authenticators =
+        BiometricManager.Authenticators.BIOMETRIC_STRONG or
+            BiometricManager.Authenticators.DEVICE_CREDENTIAL
+
+    fun canAuthenticate(): Int = BiometricManager.from(context).canAuthenticate(authenticators)
+
     fun isBiometricAvailable(): Boolean =
-        BiometricManager.from(context).canAuthenticate(
-            BiometricManager.Authenticators.BIOMETRIC_STRONG
-        ) == BiometricManager.BIOMETRIC_SUCCESS
+        BiometricManager.from(context).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
+            BiometricManager.BIOMETRIC_SUCCESS
 
     fun authenticate(
         activity: FragmentActivity,
@@ -22,9 +29,16 @@ class AppLockManager(private val context: Context) {
         onError: (String) -> Unit,
         onFailed: () -> Unit = {}
     ) {
-        if (!isBiometricAvailable()) {
-            onError("Set up a fingerprint or other strong biometric in Android first.")
-            return
+        when (canAuthenticate()) {
+            BiometricManager.BIOMETRIC_SUCCESS -> Unit
+            BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
+                onError("Set up a fingerprint/face or device screen lock in Android Settings first.")
+                return
+            }
+            else -> {
+                onError("This device does not provide a compatible secure unlock method.")
+                return
+            }
         }
 
         val executor = ContextCompat.getMainExecutor(activity)
@@ -45,12 +59,12 @@ class AppLockManager(private val context: Context) {
         val prompt = BiometricPrompt(activity, executor, callback)
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle("Unlock LifeOS")
-            .setSubtitle("Use your fingerprint or device biometric")
-            .setDescription("Your biometric stays with Android. LifeOS only receives the verification result.")
-            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+            .setSubtitle("Use your fingerprint, face, or device screen lock")
+            .setDescription("Android verifies the credential. LifeOS only receives the verification result.")
+            .setAllowedAuthenticators(authenticators)
             .build()
 
         runCatching { prompt.authenticate(promptInfo) }
-            .onFailure { onError("Biometric prompt could not start. Please try again.") }
+            .onFailure { onError("Secure unlock could not start. Please try again.") }
     }
 }

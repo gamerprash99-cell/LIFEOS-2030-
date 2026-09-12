@@ -28,6 +28,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.fragment.app.FragmentActivity
 import com.lifeos.app.core.di.LocalServiceLocator
 import com.lifeos.app.core.util.AppLockType
@@ -124,7 +127,19 @@ private fun AppLockGate(content: @Composable () -> Unit) {
     val locator = LocalServiceLocator.current
     val lockType by locator.settingsStore.appLockType.collectAsState(initial = AppLockType.NONE)
     var unlocked by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
     LaunchedEffect(lockType) { unlocked = false }
+    DisposableEffect(lifecycleOwner, lockType) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (lockType != AppLockType.NONE && event == Lifecycle.Event.ON_STOP) {
+                unlocked = false
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     when {
         lockType == AppLockType.NONE -> content()
         unlocked -> content()

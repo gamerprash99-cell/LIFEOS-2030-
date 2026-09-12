@@ -212,3 +212,7 @@ documented — a new developer shouldn't need to "rediscover" any of them.
 8. Set up a basic GitHub Actions workflow to build automatically on every change
 9. Decide on and build recurring-task support, or remove the unused setting
 10. Do a real device test pass through every feature before showing it to anyone else
+
+## 2026-09-12 refresh
+
+Documentation was refreshed after the responsive UI/capture/App Lock pass. Current UI changes are recorded in `docs/27_CURRENT_UI_UX_UPDATE.md`; README, Features, Frontend, Known Issues and Changelog were updated. Historical cloud-AI descriptions remain where they document project history, with current-state clarifications added to prevent them being mistaken for active dependencies.

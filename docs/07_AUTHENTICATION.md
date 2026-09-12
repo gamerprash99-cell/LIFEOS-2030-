@@ -76,3 +76,7 @@ relevant to authentication:
   password-database, credential-stuffing, or account-takeover risk to
   manage at all — the attack surface that would normally exist here simply
   doesn't.
+
+## 2026-09-12 current note
+
+The current App Lock implementation uses `BiometricPrompt` with `BIOMETRIC_STRONG | DEVICE_CREDENTIAL`. Historical references to `BIOMETRIC_WEAK` are retained as prior implementation history.

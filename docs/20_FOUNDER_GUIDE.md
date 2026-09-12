@@ -166,3 +166,7 @@ run in a real environment yet, it isn't signed for release, it isn't on the
 Play Store, and it doesn't have encryption on sensitive data yet. Think of
 it as: **the house is fully built inside, but the front door doesn't have a
 lock installed yet, and it hasn't had its final safety inspection.**
+
+## 2026-09-12 current note
+
+Current product behavior is fully offline. Older Anthropic/API-key explanations in this guide describe a previous implementation and are historical only.

@@ -61,15 +61,15 @@ fun AppLockScreen(lockType: AppLockType, onUnlocked: () -> Unit) {
 
     var pinInput by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
-    var biometricReady by remember { mutableStateOf(activity?.let { locator.appLockManager.isBiometricAvailable() } == true) }
+    var secureUnlockReady by remember { mutableStateOf(activity?.let { locator.appLockManager.canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS } == true) }
     var recoveryStep by remember { mutableStateOf(RecoveryStep.NONE) }
     var recoveryAnswerInput by remember { mutableStateOf("") }
     var recoveryQuestionText by remember { mutableStateOf<String?>(null) }
     var newPin by remember { mutableStateOf("") }
     var newPinConfirm by remember { mutableStateOf("") }
 
-    LaunchedEffect(lockType, biometricReady) {
-        if (lockType == AppLockType.BIOMETRIC && biometricReady && activity != null) {
+    LaunchedEffect(lockType, secureUnlockReady) {
+        if (lockType == AppLockType.BIOMETRIC && secureUnlockReady && activity != null) {
             locator.appLockManager.authenticate(
                 activity = activity,
                 onSuccess = onUnlocked,
@@ -213,9 +213,9 @@ fun AppLockScreen(lockType: AppLockType, onUnlocked: () -> Unit) {
 
             lockType == AppLockType.BIOMETRIC -> {
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 12.dp)) }
-                if (!biometricReady) {
+                if (!secureUnlockReady) {
                     Text(
-                        "No strong biometric is enrolled on this phone yet.",
+                        "No compatible biometric or secure device credential is enrolled yet.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 12.dp)
@@ -227,7 +227,7 @@ fun AppLockScreen(lockType: AppLockType, onUnlocked: () -> Unit) {
                                     Intent(Settings.ACTION_BIOMETRIC_ENROLL).apply {
                                         putExtra(
                                             Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED,
-                                            BiometricManager.Authenticators.BIOMETRIC_STRONG
+                                            BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
                                         )
                                     }
                                 } else Intent(Settings.ACTION_SECURITY_SETTINGS)
@@ -242,8 +242,8 @@ fun AppLockScreen(lockType: AppLockType, onUnlocked: () -> Unit) {
                     }
                     TextButton(
                         onClick = {
-                            biometricReady = activity?.let { locator.appLockManager.isBiometricAvailable() } == true
-                            if (!biometricReady) error = "Finish biometric setup on your phone, then try again."
+                            secureUnlockReady = activity?.let { locator.appLockManager.canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS } == true
+                            if (!secureUnlockReady) error = "Finish biometric setup on your phone, then try again."
                         }
                     ) { Text("Check again") }
                 } else {
@@ -262,7 +262,7 @@ fun AppLockScreen(lockType: AppLockType, onUnlocked: () -> Unit) {
                     ) {
                         Icon(Icons.Filled.Fingerprint, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Unlock with biometrics")
+                        Text("Unlock securely")
                     }
                 }
             }

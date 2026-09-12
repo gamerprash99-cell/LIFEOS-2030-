@@ -93,11 +93,11 @@ Full inventory of every implemented feature, with exact file paths.
 
 **Purpose**: Quick, in-the-moment capture of a memory.
 
-- **Files**: `ui/capture/CaptureSheet.kt` (bottom sheet menu), `ui/capture/CameraCaptureScreen.kt` (photo, via CameraX ImageCapture), `ui/capture/VideoCaptureScreen.kt` (video, via CameraX VideoCapture/Recorder), `ui/capture/AudioCaptureScreen.kt` (via android.media.MediaRecorder), `ui/capture/CaptureDetailScreen.kt` (full viewer, added in the UI/UX pass), `ui/capture/CaptureMediaPreview.kt` + `MediaPreviewUtils.kt` (shared preview composables, added in the UI/UX pass)
+- **Files**: `ui/capture/CaptureSheet.kt` (capture menu; Photo/Video open full-screen camera surfaces), `ui/capture/CameraCaptureScreen.kt` (photo, via CameraX ImageCapture), `ui/capture/VideoCaptureScreen.kt` (video, via CameraX VideoCapture/Recorder), `ui/capture/AudioCaptureScreen.kt` (via android.media.MediaRecorder), `ui/capture/CaptureDetailScreen.kt` (full viewer, added in the UI/UX pass), `ui/capture/CaptureMediaPreview.kt` + `MediaPreviewUtils.kt` (shared preview composables, added in the UI/UX pass)
 - **Storage**: `core/util/MediaStorage.kt` — all captured files are written to app-private storage (context.filesDir/captures/), never to shared/public storage or MediaStore
 - **Permissions**: Requested at the moment the relevant capture screen opens, via `core/util/PermissionManager.kt`'s `rememberPermissionState()` — never at app launch
 - **Database**: `data/db/entities/CaptureEntity.kt`, `data/repository/CaptureRepository.kt` (now includes `getById()`, a minimal additive read method added for the Detail screen — no schema change)
-- **Post-capture confirmation** (fixed during the UI/UX pass; see `docs/16_KNOWN_ISSUES.md`): after a Photo/Video/Audio capture, `CaptureSheet` now shows a CONFIRM state with a real preview of the captured file before closing, instead of dismissing silently.
+- **Post-capture confirmation**: after a Photo/Video/Audio capture, `CaptureSheet` shows a CONFIRM state with a real preview of the captured file before closing, instead of dismissing silently.
 - **Timeline integration**: tapping a capture item in `TimelineScreen.kt` now opens `CaptureDetailScreen`, showing the real preview, date/time, and a Delete action.
 - **Status**: Implemented (all four capture types are real, working code, not stubs; post-capture confirmation and a Detail/viewer screen were added)
 
@@ -106,7 +106,7 @@ Full inventory of every implemented feature, with exact file paths.
 **Purpose**: Free-form chat with the AI about the user's day/data.
 
 - **Files**: `ui/ai/AiAssistantScreen.kt`
-- **How it works**: Sends the running conversation to `AiRepository.chat()`, which calls `AiClient.complete()`. ⚠️ Note: the chat does not currently inject any real app data as context — `AiAssistantScreen`'s call passes `contextBlock = null`, so despite `AiRepository.chat()` supporting a context block, the chat currently only sees the conversation itself, not the user's actual notes/tasks/etc.
+- **How it works**: Sends the running conversation to `AiRepository.chat()` through the local `LifeOSIntelligenceEngine`. The current UI is an offline chat surface; it does not require a cloud provider or API key.
 - **Status**: Implemented, with the context-injection limitation noted above
 
 ## 11. AI Insights / Weekly Review
@@ -122,7 +122,7 @@ Full inventory of every implemented feature, with exact file paths.
 **Purpose**: Biometric/PIN gate on the whole app.
 
 - **Files**: `core/security/AppLockManager.kt`, gated in `MainActivity.kt`'s `AppLockGate` composable
-- **How it works**: Uses `androidx.biometric.BiometricPrompt` with `BIOMETRIC_WEAK or DEVICE_CREDENTIAL` — accepts either a device biometric or the device's PIN/pattern/password, never a LifeOS-specific password.
+- **How it works**: Uses `androidx.biometric.BiometricPrompt` with `BIOMETRIC_STRONG or DEVICE_CREDENTIAL` — accepts a strong device biometric or secure device PIN/pattern/password as the platform fallback, never a LifeOS-specific password.
 - **Toggle**: `ui/settings/SettingsScreen.kt`, persisted via `core/util/SettingsStore.kt`
 - **Status**: Implemented
 

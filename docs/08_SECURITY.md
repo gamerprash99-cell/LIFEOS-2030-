@@ -206,3 +206,7 @@ storage path.
 - Biometric verification is delegated to Android `BiometricPrompt`; LifeOS does not read/store biometric material.
 - Backup/restore uses Android document picker APIs so the user chooses the local file location.
 - No `INTERNET` permission is declared.
+
+## 2026-09-12 current note
+
+The current app has no cloud AI API key, no OkHttp network client, and no `INTERNET` permission. Historical API-key risks below are retained for audit/history only.

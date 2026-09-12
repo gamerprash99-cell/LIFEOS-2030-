@@ -17,6 +17,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -83,7 +86,7 @@ fun AppLockSetupScreen(onBack: () -> Unit) {
                     }
                     SetupStep.BIOMETRIC -> {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                            LifeOSSectionHeader("Set up biometric unlock", supportingText = "Android will now show the same system biometric UI used to unlock protected apps.")
+                            LifeOSSectionHeader("Set up biometric unlock", supportingText = "Android verifies your fingerprint/face or secure device credential. LifeOS never sees the biometric data.")
                             val pulse = rememberInfiniteTransition(label = "biometric_pulse").animateFloat(
                                 1f, 1.08f,
                                 infiniteRepeatable(tween(900), RepeatMode.Reverse),
@@ -95,7 +98,7 @@ fun AppLockSetupScreen(onBack: () -> Unit) {
                             LifeOSCard(modifier = Modifier.animateContentSize()) {
                                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text("What happens next", style = MaterialTheme.typography.titleMedium)
-                                    Text("Tap Verify & enable. Android owns the biometric scan; LifeOS never sees your fingerprint or face data.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("Tap Verify & enable. Android owns the secure verification; LifeOS receives only success or failure.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -103,13 +106,13 @@ fun AppLockSetupScreen(onBack: () -> Unit) {
                                 onClick = {
                                     val act = activity
                                     if (act == null) {
-                                        error = "Biometric verification is unavailable here."
+                                        error = "Secure unlock is unavailable here."
                                     } else {
                                         locator.appLockManager.authenticate(
                                             act,
                                             onSuccess = { scope.launch { locator.settingsStore.enableBiometricLock(); step = SetupStep.DONE } },
                                             onError = { error = it },
-                                            onFailed = { error = "Fingerprint not recognized. Try again." }
+                                            onFailed = { error = "Not recognized. Try again." }
                                         )
                                     }
                                 },
@@ -117,7 +120,24 @@ fun AppLockSetupScreen(onBack: () -> Unit) {
                             ) {
                                 Icon(Icons.Filled.Fingerprint, null)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Verify & enable biometric")
+                                Text("Verify & enable secure unlock")
+                            }
+                            if (locator.appLockManager.canAuthenticate() == androidx.biometric.BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
+                                OutlinedButton(
+                                    onClick = {
+                                        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                            Intent(Settings.ACTION_BIOMETRIC_ENROLL)
+                                        } else {
+                                            Intent(Settings.ACTION_SECURITY_SETTINGS)
+                                        }
+                                        runCatching { act?.startActivity(intent) }
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(Icons.Filled.Security, null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Set up device security")
+                                }
                             }
                             TextButton(onClick = { error = null; step = SetupStep.CHOOSE }, Modifier.align(Alignment.CenterHorizontally)) { Text("Back") }
                         }

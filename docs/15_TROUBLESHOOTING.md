@@ -157,3 +157,7 @@ control has not been initialized yet.
 **CAUSE**: The selected file is not a valid LifeOS JSON backup, or the document provider denied access.
 
 **SOLUTION**: Select a previously exported LifeOS JSON backup and allow the document picker access. Restore uses the existing repository/Room path and does not recreate the database.
+
+## 2026-09-12 current note
+
+The current app does not require any AI API key. The provider/API troubleshooting section below is historical only and must not be used as a setup step.

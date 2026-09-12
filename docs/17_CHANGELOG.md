@@ -1,5 +1,25 @@
 # 17 — Changelog
 
+## 2026-09-12 — Responsive UI, capture UX and App Lock reliability
+
+### Changed
+- Reworked Home into a compact adaptive dashboard with reduced whitespace and no sticky section headers.
+- Added a Home Quick Actions row exposing Capture, Notes, Diary, Tasks and Habits without removing existing navigation.
+- Added a compact LifeOS AI floating assistant action directly above Capture.
+- Refreshed LifeOS AI chat UI with local status, suggestion chips, compact bubbles and animated conversation scrolling.
+- Photo/video capture now opens as a full-screen dialog surface instead of a partially expanded bottom sheet.
+- Camera zoom controls now respect each device's actual CameraX zoom range and support pinch-to-zoom.
+
+### Fixed
+- Removed the need to drag the capture sheet upward before photo/video controls can be used.
+- Prevented unsupported 2×/3× zoom values from being offered on devices whose camera does not expose them.
+- App Lock biometric flow now supports secure device-credential fallback and re-locks after the app leaves the foreground.
+
+### Preserved
+- Diary writing remains implemented and reachable.
+- Existing Room schema, repositories, use cases, ViewModels, navigation, backup/restore, reminders, timeline and capture persistence remain intact.
+
+
 > **Current project snapshot — 2026-09-11:** This documentation set has been refreshed to match the current LifeOS archive. The latest UI/UX pass covers Timeline, Tasks, Home-first daily math alarm, biometric App Lock, capture controls, landscape video playback, backup export/restore and onboarding restore. The existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and LifeOS color identity are preserved. No Room schema change or destructive database migration was introduced. Android build/device verification remains pending because this coding environment does not provide a usable Android SDK/Gradle toolchain.
 
 

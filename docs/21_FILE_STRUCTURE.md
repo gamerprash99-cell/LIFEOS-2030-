@@ -46,8 +46,8 @@ WHAT BREAKS IF MODIFIED: If not registered in AndroidManifest.xml's android:name
 ## core/ — cross-cutting infrastructure
 
 ### core/di/ServiceLocator.kt
-PURPOSE: The single composition root — constructs the database, every repository, the AI client, and every use case, exactly once (singleton pattern)
-DEPENDENCIES: Everything in data/ and the AI classes in core/ai/
+PURPOSE: The single composition root — constructs the database, every repository, the local Intelligence Engine/AI repository, and every use case, exactly once (singleton pattern)
+DEPENDENCIES: Everything in data/ plus local intelligence/AI classes
 WHAT BREAKS IF MODIFIED: Removing a repository here breaks every screen that depends on it via LocalServiceLocator
 
 ### core/di/LocalServiceLocator.kt
@@ -55,13 +55,10 @@ PURPOSE: Defines the Compose CompositionLocal (LocalServiceLocator) and a generi
 WHAT BREAKS IF MODIFIED: Removing this breaks every screen's LocalServiceLocator.current call
 
 ### core/ai/AiClient.kt
-PURPOSE: The only file that makes the actual HTTPS call to Anthropic
-IMPORTANT FUNCTIONS: complete(systemPrompt, userPrompt, maxTokens)
-DEPENDENCIES: OkHttp, kotlinx.serialization
-WHAT BREAKS IF MODIFIED: Changing the model string or baseUrl directly changes what AI backend the whole app talks to
+STATUS: Removed from the current codebase. Retained here only as a historical architecture reference; the current app has no HTTP AI client.
 
 ### core/ai/AiRepository.kt
-PURPOSE: All prompt assembly for every AI feature; the only caller of AiClient
+PURPOSE: Local compatibility layer over `core/intelligence/LifeOSIntelligenceEngine`; no external AI caller
 WHAT BREAKS IF MODIFIED: Changing a system prompt changes AI behavior app-wide for that feature
 
 ### core/ai/AiModels.kt
@@ -77,7 +74,7 @@ PURPOSE: Schedules/fires WorkManager jobs for Task/Habit reminders
 WHAT BREAKS IF MODIFIED: Changing the unique work name pattern could cause duplicate reminders instead of replacing old ones
 
 ### core/util/SettingsStore.kt
-PURPOSE: All persisted app settings (App Lock toggle, AI key, onboarding flag, dark theme, AI features toggle) via DataStore Preferences
+PURPOSE: All persisted app settings (App Lock toggle, App Lock, onboarding flag, dark theme, and other local settings) via DataStore Preferences
 WHAT BREAKS IF MODIFIED: Renaming a Preferences.Key string silently loses previously saved values for existing users
 
 ### core/util/DateTimeUtils.kt, IdGenerator.kt, MediaStorage.kt, PermissionManager.kt, NotificationHelper.kt

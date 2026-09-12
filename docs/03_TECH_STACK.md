@@ -54,3 +54,7 @@ From `app/build.gradle.kts`:
 | minSdk | 26 (Android 8.0 Oreo) |
 | targetSdk | 35 |
 | Java/Kotlin JVM target | 17 |
+
+## 2026-09-12 current stack correction
+
+The current build uses Kotlin + Jetpack Compose/Material 3 + Room + DataStore + CameraX + WorkManager + AndroidX Biometric + Coil. There is no OkHttp/cloud-AI dependency and no `INTERNET` permission. Older references to `AiClient.kt` are historical and do not describe the current source tree.

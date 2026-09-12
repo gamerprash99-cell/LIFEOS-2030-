@@ -168,3 +168,14 @@ the integration boundary; the library does not introduce a new UI framework.
 ## Current UI baseline — 2026-09-11
 
 The shared UI system now uses purple/violet tokens, 8dp spacing, 20dp screen padding, 16/20/28dp control/card radii, safe-area-aware scrolling, reusable glass/gradient surfaces and intentional motion. Home uses sticky section headers; Timeline media keeps date/time visible; video fullscreen is in-app landscape playback; App Lock and backup remain native Android flows.
+
+## Current UI baseline — 2026-09-12
+
+- Home uses `LazyVerticalGrid(GridCells.Adaptive(minSize = 300.dp))` to adapt between phone and larger-screen layouts while keeping existing callbacks and repository-backed data.
+- Home avoids `stickyHeader` section blocks that previously amplified the feeling of excessive whitespace during scrolling.
+- Floating actions place the small LifeOS AI assistant action immediately above Capture.
+- Photo/video capture is full-screen and edge-to-edge inside a dialog surface; status/navigation insets are applied to controls.
+- Camera zoom is clamped to the CameraX-reported range and supports pinch gestures.
+- AI chat uses compact bubbles and a persistent bottom composer rather than a large empty conversation surface.
+- Diary remains a real Room-backed feature and is exposed from Home Quick Actions.
+

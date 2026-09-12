@@ -151,3 +151,7 @@ APIs, revisiting this decision in favor of Retrofit would be a reasonable
 future discussion.
 
 **Status**: Implemented.
+
+## 2026-09-12 current note
+
+ADR historical records that mention `AiClient.kt` describe the superseded cloud-AI design. The current decision is documented by `docs/11_AI_SYSTEM.md`: no external AI provider and no network dependency.

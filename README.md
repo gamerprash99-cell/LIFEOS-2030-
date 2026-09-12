@@ -1,4 +1,4 @@
-# LifeOS — Android Scaffold
+# LifeOS — Your Second Brain
 
 📚 **Full project documentation now lives in [`/docs`](./docs)** — a
 complete, code-audited knowledge base covering architecture, database,
@@ -10,7 +10,7 @@ Start with [`docs/00_PROJECT_OVERVIEW.md`](./docs/00_PROJECT_OVERVIEW.md)
 This file remains as a quick build reference; `/docs` is the authoritative,
 detailed source going forward.
 
-## Current project snapshot — 2026-09-11
+## Current project snapshot — 2026-09-12
 
 The latest pass is a UI/UX and stability update across Timeline, Tasks, Home, App Lock, alarm, capture, video playback, backup/restore and onboarding. Existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and the LifeOS color identity are preserved. The current Intelligence Engine is local/offline; no external AI API or API key is required. No Room schema change or destructive migration was introduced.
 
@@ -53,6 +53,22 @@ violet/lavender theme are preserved.
 
 ---
 
+## 2026-09-12 — Responsive UI, capture UX and App Lock reliability pass
+
+The latest implementation pass is focused on the problems found during device review. Existing features, Kotlin/Compose/Room/manual-DI/Compose-Navigation architecture and local data model are preserved. No Room schema change or destructive migration was introduced.
+
+- Home is now a denser responsive dashboard using an adaptive Compose grid: one-column phone layout and multi-column tablet/large-screen layout where space allows. Large artificial gaps and sticky section headers were removed.
+- Home now has a compact LifeOS header, progress overview, quick actions and a small **LifeOS AI** assistant button positioned directly above the **Capture** action. Diary writing is directly reachable from Quick Actions.
+- AI Assistant received a chat-focused UI refresh with compact message bubbles, local/offline status, suggestion chips, animated list scrolling and a proper bottom composer. The existing local `AiRepository` flow is retained.
+- Photo and video capture are now true full-screen camera experiences instead of a partially expanded bottom sheet. The user no longer has to drag the sheet upward to expose the shutter/record controls.
+- Camera zoom is device-aware: available 1×/2×/3× buttons are derived from the actual CameraX zoom range, values are clamped safely, and pinch-to-zoom is supported.
+- Biometric App Lock now uses Android's real `BiometricPrompt` with strong biometric plus secure device-credential fallback. The gate also re-locks after the app leaves the foreground, so enabling App Lock actually protects later launches/resumes.
+- Diary was not removed. `DiaryScreen`, `DiaryRepository`, the Room entity and navigation remain present; Home now exposes Diary directly through Quick Actions.
+
+**Verification limitation:** this archive does not contain the Gradle wrapper and this coding environment does not have a Gradle executable or Android SDK available, so a real Android compile/emulator screenshot run could not be honestly claimed here. Static source checks were performed after the changes.
+
+See [`docs/27_CURRENT_UI_UX_UPDATE.md`](./docs/27_CURRENT_UI_UX_UPDATE.md) for the detailed change map and verification status.
+
 ## What's implemented (Phases 1–6 of the spec)
 
 | Area | Status |
@@ -68,10 +84,10 @@ violet/lavender theme are preserved.
 | Home dashboard | ✅ Reorganized as Today → Tasks → Habits → Spending → Recent Activity → Intelligence |
 | AI layer (note actions, task extraction, diary drafting, weekly review, chat) | ✅ Offline LifeOS Intelligence Engine; no external AI API required |
 | Diary AI-draft flow ("turn thoughts into an entry") + Approve UI | ✅ AI drafts are flagged `isReviewed = false` and shown with an Approve button until confirmed |
-| App Lock (biometric/PIN) | ✅ Native Android BiometricPrompt + secure local PIN/recovery flow |
+| App Lock (biometric/PIN) | ✅ Native Android BiometricPrompt with secure device-credential fallback + local PIN/recovery flow + foreground re-lock |
 | Backup & Export (full JSON export/import) + Share sheet | ✅ Exports a local JSON file and can hand it off via Android's native share sheet (FileProvider) |
-| Photo capture (CameraX) | ✅ Real preview/capture + front/back switch + 1×/2×/3× zoom |
-| Video capture + viewer | ✅ CameraX recording + front/back switch + 1×/2×/3× zoom + landscape fullscreen + seek controls |
+| Photo capture (CameraX) | ✅ Full-screen real preview/capture + front/back switch + device-aware zoom + pinch-to-zoom |
+| Video capture + viewer | ✅ Full-screen CameraX recording + front/back switch + device-aware zoom + pinch-to-zoom + landscape fullscreen + seek controls |
 | Habits list analytics | ✅ Each habit row shows current/best streak plus 7-day and 30-day completion directly on the list |
 | Audio capture (MediaRecorder) | ✅ Real start/stop recording to app-private storage |
 | Task & Habit reminders (WorkManager + notifications) | ✅ Per-item precise scheduling (not polling); Material3 time picker wired into the Add Task/Add Habit dialogs; notification permission requested only when the user turns Reminders on in Settings |
