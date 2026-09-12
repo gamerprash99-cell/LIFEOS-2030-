@@ -3,6 +3,7 @@ package com.lifeos.app.ui.ai
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -26,6 +27,7 @@ import com.lifeos.app.core.ai.*
 import com.lifeos.app.core.di.LambdaViewModelFactory
 import com.lifeos.app.core.di.LocalServiceLocator
 import com.lifeos.app.ui.components.LifeOSAIOrb
+import com.lifeos.app.ui.components.LifeOSCard
 import com.lifeos.app.ui.theme.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
