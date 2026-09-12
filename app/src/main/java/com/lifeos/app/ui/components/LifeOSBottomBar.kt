@@ -1,7 +1,5 @@
 package com.lifeos.app.ui.components
 
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsets.Companion.navigationBars
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -25,7 +23,7 @@ fun LifeOSBottomBar(navController: NavHostController) {
     val entry by navController.currentBackStackEntryAsState()
     val currentRoute = entry?.destination?.route
     val items = itemsForRoute(currentRoute)
-    NavigationBar(modifier=Modifier.fillMaxWidth(),containerColor=MaterialTheme.colorScheme.surface.copy(alpha=.96f),tonalElevation=0.dp,windowInsets=WindowInsets.navigationBars) {
+    NavigationBar(modifier=Modifier.fillMaxWidth(),containerColor=MaterialTheme.colorScheme.surface.copy(alpha=.96f),tonalElevation=0.dp,windowInsets=NavigationBarDefaults.windowInsets) {
         items.forEach { item ->
             val selected = currentRoute == item.screen.route || (item.screen == Screen.Home && currentRoute == Screen.Home.route)
             NavigationBarItem(
