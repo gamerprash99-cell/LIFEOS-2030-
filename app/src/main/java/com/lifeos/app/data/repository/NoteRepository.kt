@@ -9,7 +9,9 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class NoteRepository(private val dao: NoteDao) {
+
     private val json = Json { ignoreUnknownKeys = true }
+
     fun observeAll(): Flow<List<NoteEntity>> = dao.observeAll()
     fun observePinned(): Flow<List<NoteEntity>> = dao.observePinned()
     fun observeFavorites(): Flow<List<NoteEntity>> = dao.observeFavorites()
@@ -19,21 +21,75 @@ class NoteRepository(private val dao: NoteDao) {
     fun observeFolders(): Flow<List<String>> = dao.observeFolders()
     fun observeById(id: String): Flow<NoteEntity?> = dao.observeById(id)
     fun observeCount(): Flow<Int> = dao.observeCount()
+
     suspend fun getById(id: String): NoteEntity? = dao.getById(id)
     suspend fun getCreatedBetween(startMillis: Long, endMillis: Long): List<NoteEntity> = dao.getCreatedBetween(startMillis, endMillis)
-    suspend fun createNote(title:String,blocks:List<NoteBlock>,folder:String?=null,tags:List<String>=emptyList()):String { val id=IdGenerator.newId();val now=System.currentTimeMillis();dao.upsert(NoteEntity(id=id,title=title,contentJson=json.encodeToString(blocks),plainTextForSearch=flattenBlocks(blocks),folder=folder,tagsCsv=tags.joinToString(","),createdAt=now,updatedAt=now));return id }
-    suspend fun updateNoteContent(id:String,title:String,blocks:List<NoteBlock>){val e=dao.getById(id)?:return;dao.update(e.copy(title=title,contentJson=json.encodeToString(blocks),plainTextForSearch=flattenBlocks(blocks),updatedAt=System.currentTimeMillis()))}
-    suspend fun setFolder(id:String,folder:String?){val e=dao.getById(id)?:return;dao.update(e.copy(folder=folder,updatedAt=System.currentTimeMillis()))}
-    suspend fun setTags(id:String,tags:List<String>){val e=dao.getById(id)?:return;dao.update(e.copy(tagsCsv=tags.joinToString(","),updatedAt=System.currentTimeMillis()))}
-    suspend fun togglePin(id:String,pinned:Boolean)=dao.setPinned(id,pinned,System.currentTimeMillis())
-    suspend fun toggleFavorite(id:String,favorite:Boolean)=dao.setFavorite(id,favorite,System.currentTimeMillis())
-    suspend fun archive(id:String,archived:Boolean)=dao.setArchived(id,archived,System.currentTimeMillis())
-    suspend fun moveToTrash(id:String)=dao.setDeleted(id,true,System.currentTimeMillis())
-    suspend fun restoreFromTrash(id:String)=dao.setDeleted(id,false,System.currentTimeMillis())
-    suspend fun permanentlyDelete(id:String)=dao.hardDelete(id)
-    suspend fun search(query:String):List<NoteEntity>{if(query.isBlank())return emptyList();return dao.search(query)}
-    fun decodeBlocks(note:NoteEntity):List<NoteBlock> = try { json.decodeFromString(kotlinx.serialization.builtins.ListSerializer(NoteBlock.serializer()),note.contentJson) } catch(_:Exception){emptyList()}
-    private fun flattenBlocks(blocks:List<NoteBlock>):String=blocks.joinToString(" "){when(it){is NoteBlock.Paragraph->it.text;is NoteBlock.Heading->it.text;is NoteBlock.BulletItem->it.text;is NoteBlock.NumberedItem->it.text;is NoteBlock.ChecklistItem->it.text}}
-    suspend fun getAllForBackup():List<NoteEntity>=dao.getAllForBackup()
-    suspend fun restoreFromBackup(notes:List<NoteEntity>)=notes.forEach{dao.upsert(it)}
+
+    suspend fun createNote(
+        title: String,
+        blocks: List<NoteBlock>,
+        folder: String? = null,
+        tags: List<String> = emptyList()
+    ): String {
+        val id = IdGenerator.newId()
+        val now = System.currentTimeMillis()
+        val entity = NoteEntity(
+            id = id,
+            title = title,
+            contentJson = json.encodeToString(blocks),
+            plainTextForSearch = flattenBlocks(blocks),
+            folder = folder,
+            tagsCsv = tags.joinToString(","),
+            createdAt = now,
+            updatedAt = now
+        )
+        dao.upsert(entity)
+        return id
+    }
+
+    suspend fun updateNoteContent(id: String, title: String, blocks: List<NoteBlock>) {
+        val existing = dao.getById(id) ?: return
+        dao.update(existing.copy(title = title, contentJson = json.encodeToString(blocks), plainTextForSearch = flattenBlocks(blocks), updatedAt = System.currentTimeMillis()))
+    }
+
+    suspend fun setFolder(id: String, folder: String?) {
+        val existing = dao.getById(id) ?: return
+        dao.update(existing.copy(folder = folder, updatedAt = System.currentTimeMillis()))
+    }
+
+    suspend fun setTags(id: String, tags: List<String>) {
+        val existing = dao.getById(id) ?: return
+        dao.update(existing.copy(tagsCsv = tags.joinToString(","), updatedAt = System.currentTimeMillis()))
+    }
+
+    suspend fun togglePin(id: String, pinned: Boolean) = dao.setPinned(id, pinned, System.currentTimeMillis())
+    suspend fun toggleFavorite(id: String, favorite: Boolean) = dao.setFavorite(id, favorite, System.currentTimeMillis())
+    suspend fun archive(id: String, archived: Boolean) = dao.setArchived(id, archived, System.currentTimeMillis())
+    suspend fun moveToTrash(id: String) = dao.setDeleted(id, true, System.currentTimeMillis())
+    suspend fun restoreFromTrash(id: String) = dao.setDeleted(id, false, System.currentTimeMillis())
+    suspend fun permanentlyDelete(id: String) = dao.hardDelete(id)
+
+    suspend fun search(query: String): List<NoteEntity> {
+        if (query.isBlank()) return emptyList()
+        return dao.search(query)
+    }
+
+    fun decodeBlocks(note: NoteEntity): List<NoteBlock> = try {
+        json.decodeFromString(kotlinx.serialization.builtins.ListSerializer(NoteBlock.serializer()), note.contentJson)
+    } catch (_: Exception) {
+        emptyList()
+    }
+
+    private fun flattenBlocks(blocks: List<NoteBlock>): String = blocks.joinToString(" ") { block ->
+        when (block) {
+            is NoteBlock.Paragraph -> block.text
+            is NoteBlock.Heading -> block.text
+            is NoteBlock.BulletItem -> block.text
+            is NoteBlock.NumberedItem -> block.text
+            is NoteBlock.ChecklistItem -> block.text
+        }
+    }
+
+    suspend fun getAllForBackup(): List<NoteEntity> = dao.getAllForBackup()
+    suspend fun restoreFromBackup(notes: List<NoteEntity>) = notes.forEach { dao.upsert(it) }
 }
