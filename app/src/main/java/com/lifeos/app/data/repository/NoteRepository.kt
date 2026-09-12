@@ -23,7 +23,6 @@ class NoteRepository(private val dao: NoteDao) {
     fun observeCount(): Flow<Int> = dao.observeCount()
 
     suspend fun getById(id: String): NoteEntity? = dao.getById(id)
-    suspend fun getCreatedBetween(startMillis: Long, endMillis: Long): List<NoteEntity> = dao.getCreatedBetween(startMillis, endMillis)
 
     suspend fun createNote(
         title: String,
@@ -73,8 +72,11 @@ class NoteRepository(private val dao: NoteDao) {
     suspend fun toggleFavorite(id: String, favorite: Boolean) = dao.setFavorite(id, favorite, System.currentTimeMillis())
     suspend fun archive(id: String, archived: Boolean) = dao.setArchived(id, archived, System.currentTimeMillis())
 
+    /** Soft delete → moves to Trash, supports "Restore notes" (Section 7). */
     suspend fun moveToTrash(id: String) = dao.setDeleted(id, true, System.currentTimeMillis())
     suspend fun restoreFromTrash(id: String) = dao.setDeleted(id, false, System.currentTimeMillis())
+
+    /** Permanent delete — caller (UI) is responsible for requiring confirmation (Rule #10). */
     suspend fun permanentlyDelete(id: String) = dao.hardDelete(id)
 
     suspend fun search(query: String): List<NoteEntity> {
