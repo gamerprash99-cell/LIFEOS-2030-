@@ -2,7 +2,7 @@ package com.lifeos.app.ui.onboarding
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
@@ -31,7 +31,7 @@ fun OnboardingScreen(onFinish: () -> Unit, onRestoreBackup: (() -> Unit)? = null
     val isLast = pageIndex == PAGES.lastIndex
 
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        AnimatedContent(targetState = pageIndex, transitionSpec = { fadeIn(tween(220)) togetherWith slideInVertically(tween(260), initialOffsetY = { it / 8 }) }, label = "onboarding_page") { index ->
+        AnimatedContent(targetState = pageIndex, transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(220)) }, label = "onboarding_page") { index ->
             val current = PAGES[index]
             LifeOSCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
