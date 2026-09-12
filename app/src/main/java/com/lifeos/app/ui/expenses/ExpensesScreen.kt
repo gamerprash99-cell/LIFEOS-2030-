@@ -78,7 +78,7 @@ fun ExpensesScreen(onBack: () -> Unit = {}) {
             }
             item {
                 LifeOSCard {
-                    Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement=Arrangement.spacedBy(15.dp)) {
+                    Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(15.dp)) {
                         Row(verticalAlignment=Alignment.CenterVertically) {
                             Surface(shape=RoundedCornerShape(16.dp), color=LifeOSVioletSoft) { Text("THIS MONTH", color=LifeOSPrimary, fontWeight=FontWeight.Bold, modifier=Modifier.padding(horizontal=13.dp, vertical=8.dp)) }
                             Spacer(Modifier.width(10.dp)); Text(LocalDate.now().format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())), color=MaterialTheme.colorScheme.onSurfaceVariant); Spacer(Modifier.weight(1f)); Surface(shape=RoundedCornerShape(999.dp), color=Color(0xFFE8FAF1)) { Text("Safe Zone 🌿", color=Color(0xFF159A67), modifier=Modifier.padding(horizontal=11.dp, vertical=7.dp), fontWeight=FontWeight.SemiBold) }
@@ -86,7 +86,7 @@ fun ExpensesScreen(onBack: () -> Unit = {}) {
                         Row(verticalAlignment=Alignment.Bottom) { Text("₹${"%.0f".format(total)}", style=MaterialTheme.typography.displaySmall, fontWeight=FontWeight.Bold); Text(" / ₹${"%.0f".format(budget)}", style=MaterialTheme.typography.titleMedium, color=LifeOSPrimary, modifier=Modifier.padding(bottom=6.dp)) }
                         Text(if(total==0.0) "No expenses logged yet ✨ You're 100% on budget!" else "₹${"%.0f".format(remaining)} left in your monthly target", color=MaterialTheme.colorScheme.onSurfaceVariant)
                         Row(verticalAlignment=Alignment.CenterVertically) { Text("Monthly Target", fontWeight=FontWeight.SemiBold); Spacer(Modifier.weight(1f)); Text("${((total/budget)*100).toInt()}% used", color=LifeOSPrimary, fontWeight=FontWeight.Bold) }
-                        LinearProgressIndicator({ (total/budget).toFloat().coerceIn(0f,1f) }, modifier=Modifier.fillMaxWidth().height(8.dp), trackColor=LifeOSLavenderSoft, color=LifeOSPrimary)
+                        LinearProgressIndicator(progress = { (total/budget).toFloat().coerceIn(0f,1f) }, modifier=Modifier.fillMaxWidth().height(8.dp), trackColor=LifeOSLavenderSoft, color=LifeOSPrimary)
                         Row(Modifier.fillMaxWidth(), horizontalArrangement=Arrangement.spacedBy(10.dp)) { Metric("DAILY AVG", "₹${"%.0f".format(total / LocalDate.now().dayOfMonth)}"); Metric("BUDGET LEFT", "₹${"%.0f".format(remaining)}"); Metric("SAVED", "${(100-(total/budget*100)).coerceAtLeast(0.0).toInt()}% 🎯") }
                     }
                 }
@@ -116,5 +116,5 @@ fun ExpensesScreen(onBack: () -> Unit = {}) {
     }
 }
 
-@Composable private fun Metric(label:String,value:String){ Surface(shape=RoundedCornerShape(16.dp),color=Color.White,border=BorderStroke(1.dp,LifeOSLavender),modifier=Modifier.weight(1f)){Column(Modifier.padding(10.dp),horizontalAlignment=Alignment.CenterHorizontally){Text(label,style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant);Text(value,color=LifeOSPrimary,fontWeight=FontWeight.Bold)}} }
+@Composable private fun RowScope.Metric(label:String,value:String){ Surface(shape=RoundedCornerShape(16.dp),color=Color.White,border=BorderStroke(1.dp,LifeOSLavender),modifier=Modifier.weight(1f)){Column(Modifier.padding(10.dp),horizontalAlignment=Alignment.CenterHorizontally){Text(label,style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant);Text(value,color=LifeOSPrimary,fontWeight=FontWeight.Bold)}} }
 @Composable private fun QuickIdea(text:String){Surface(shape=RoundedCornerShape(999.dp),color=Color.White,border=BorderStroke(1.dp,LifeOSLavender)){Text(text,modifier=Modifier.padding(horizontal=12.dp,vertical=8.dp),style=MaterialTheme.typography.labelMedium)}}
