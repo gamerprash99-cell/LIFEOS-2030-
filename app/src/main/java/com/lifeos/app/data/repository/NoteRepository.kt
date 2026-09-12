@@ -23,6 +23,7 @@ class NoteRepository(private val dao: NoteDao) {
     fun observeCount(): Flow<Int> = dao.observeCount()
 
     suspend fun getById(id: String): NoteEntity? = dao.getById(id)
+    suspend fun getCreatedBetween(startMillis: Long, endMillis: Long): List<NoteEntity> = dao.getCreatedBetween(startMillis, endMillis)
 
     suspend fun createNote(
         title: String,
