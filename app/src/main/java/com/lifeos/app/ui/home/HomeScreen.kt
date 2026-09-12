@@ -30,82 +30,40 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lifeos.app.core.di.LambdaViewModelFactory
 import com.lifeos.app.core.di.LocalServiceLocator
-import com.lifeos.app.core.reminders.AlarmScheduler
-import com.lifeos.app.core.util.DailyAlarm
-import com.lifeos.app.core.util.DateTimeUtils
-import com.lifeos.app.core.util.rememberPermissionState
 import com.lifeos.app.data.db.entities.CaptureType
 import com.lifeos.app.domain.usecase.HabitSummaryRow
 import com.lifeos.app.ui.components.*
-import com.lifeos.app.ui.theme.LifeOSDarkHeroGradient
 import com.lifeos.app.ui.theme.LifeOSPrimaryGradient
-import com.lifeos.app.ui.theme.LifeOSSoftGradient
 import com.lifeos.app.ui.theme.LifeOSSpacing
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-/**
- * Responsive Home dashboard. One column on phones, adaptive cards on larger
- * screens/tablets. Data still comes from the existing use case/repositories.
- */
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    onOpenTasks: () -> Unit,
-    onOpenHabits: () -> Unit,
-    onOpenCapture: () -> Unit,
-    onOpenAiAssistant: () -> Unit,
-    onOpenNotes: () -> Unit = {},
-    onOpenExpenses: () -> Unit = {},
-    onOpenDiary: () -> Unit = {},
-    onOpenInsights: () -> Unit = {},
-    onOpenSearch: () -> Unit = {},
-    onOpenTimeline: () -> Unit = {},
-    onOpenMorningPhoto: () -> Unit = {}
-) {
-    val locator = LocalServiceLocator.current
-    val viewModel: HomeViewModel = viewModel(
-        factory = LambdaViewModelFactory {
-            HomeViewModel(locator.getHomeSummaryUseCase, locator.taskRepository, locator.habitRepository)
-        }
-    )
+fun HomeScreen(onOpenTasks:()->Unit,onOpenHabits:()->Unit,onOpenCapture:()->Unit,onOpenAiAssistant:()->Unit,onOpenNotes:()->Unit={},onOpenExpenses:()->Unit={},onOpenDiary:()->Unit={},onOpenInsights:()->Unit={},onOpenSearch:()->Unit={},onOpenTimeline:()->Unit={},onOpenMorningPhoto:()->Unit={}) {
+    val locator=LocalServiceLocator.current
+    val viewModel:HomeViewModel=viewModel(factory=LambdaViewModelFactory{HomeViewModel(locator.getHomeSummaryUseCase,locator.taskRepository,locator.habitRepository)})
     val summary by viewModel.summary.collectAsState()
-    val todayCaptures by locator.captureRepository
-        .observeForDay(DateTimeUtils.today().toEpochDay())
-        .collectAsState(initial = emptyList())
-    val morningPhotoDone = todayCaptures.any { it.type == CaptureType.PHOTO && it.caption == "Morning check-in" }
-    val latestCapture = todayCaptures.maxByOrNull { it.timeMinutes }
-
+    val todayCaptures by locator.captureRepository.observeForDay(com.lifeos.app.core.util.DateTimeUtils.today().toEpochDay()).collectAsState(initial=emptyList())
+    val morningPhotoDone=todayCaptures.any{it.type==CaptureType.PHOTO&&it.caption=="Morning check-in"}
+    val latestCapture=todayCaptures.maxByOrNull{it.timeMinutes}
     Box(Modifier.fillMaxSize()) {
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 300.dp),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = LifeOSSpacing.screenPadding,
-                end = LifeOSSpacing.screenPadding,
-                top = LifeOSSpacing.sm,
-                bottom = 118.dp
-            ),
-            horizontalArrangement = Arrangement.spacedBy(LifeOSSpacing.cardSpacing),
-            verticalArrangement = Arrangement.spacedBy(LifeOSSpacing.cardSpacing)
-        ) {
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { HomeHeader(summary?.greeting ?: "Welcome", summary?.dateLabel.orEmpty(), onOpenSearch) }
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { TodayOverviewCard(summary?.tasksTotalToday ?: 0, summary?.tasksCompletedToday ?: 0, summary?.habitsToday.orEmpty(), summary?.todaySpend ?: 0.0, onOpenTasks) }
-            if (!morningPhotoDone) item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { MorningCheckInCard(onOpenMorningPhoto) }
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { HomeAlarmCard() }
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { SectionHeading("Today's habits", "View all", onOpenHabits) }
-            if (summary?.habitsToday.isNullOrEmpty()) item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { LifeOSEmptyState("Your rhythm starts here", "Create a habit and LifeOS will keep the streak visible.", icon = Icons.Filled.LocalFireDepartment) }
-            else items(summary?.habitsToday.orEmpty().take(6), key = { it.habit.id }) { HabitHomeCard(it) }
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { SectionHeading("Today's tasks", "View all", onOpenTasks) }
-            if (summary?.tasksToday.isNullOrEmpty()) item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { LifeOSEmptyState("Nothing urgent", "You're clear for now. Add a task when something needs your attention.", icon = Icons.Filled.CheckCircle) }
-            else items(summary?.tasksToday?.take(6).orEmpty(), key = { it.id }) { task -> var checked by remember(task.id, task.isCompleted) { mutableStateOf(task.isCompleted) }; TaskHomeRow(task.title, checked) { checked = it; viewModel.toggleTask(task.id, it) } }
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { QuickActionsCard(onOpenCapture, onOpenNotes, onOpenDiary, onOpenTasks, onOpenHabits) }
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { SpendingHomeCard(summary?.todaySpend ?: 0.0, onOpenExpenses) }
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { SectionHeading("Latest memory", "Open Timeline", onOpenTimeline) }
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { LatestMemoryCard(latestCapture, onOpenTimeline) }
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { LifeOSAiHomeCard(onOpenAiAssistant) }
+        LazyVerticalGrid(columns=GridCells.Adaptive(minSize=300.dp),modifier=Modifier.fillMaxSize(),contentPadding=PaddingValues(start=LifeOSSpacing.screenPadding,end=LifeOSSpacing.screenPadding,top=LifeOSSpacing.sm,bottom=118.dp),horizontalArrangement=Arrangement.spacedBy(LifeOSSpacing.cardSpacing),verticalArrangement=Arrangement.spacedBy(LifeOSSpacing.cardSpacing)) {
+            item(span={androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan)}){HomeHeader(summary?.greeting?:"Welcome",summary?.dateLabel.orEmpty(),onOpenSearch)}
+            item(span={androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan)}){TodayOverviewCard(summary?.tasksTotalToday?:0,summary?.tasksCompletedToday?:0,summary?.habitsToday.orEmpty(),summary?.todaySpend?:0.0,onOpenTasks)}
+            if(!morningPhotoDone)item(span={androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan)}){MorningCheckInCard(onOpenMorningPhoto)}
+            item(span={androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan)}){HomeAlarmCard()}
+            item(span={androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan)}){SectionHeading("Today's habits","View all",onOpenHabits)}
+            if(summary?.habitsToday.isNullOrEmpty())item(span={androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan)}){LifeOSEmptyState("Your rhythm starts here","Create a habit and LifeOS will keep the streak visible.",icon=Icons.Filled.LocalFireDepartment)}else items(summary?.habitsToday.orEmpty().take(6),key={it.habit.id}){HabitHomeCard(it)}
+            item(span={androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan)}){SectionHeading("Today's tasks","View all",onOpenTasks)}
+            if(summary?.tasksToday.isNullOrEmpty())item(span={androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan)}){LifeOSEmptyState("Nothing urgent","You're clear for now. Add a task when something needs your attention.",icon=Icons.Filled.CheckCircle)}else items(summary?.tasksToday?.take(6).orEmpty(),key={it.id}){task->var checked by remember(task.id,task.isCompleted){mutableStateOf(task.isCompleted)};TaskHomeRow(task.title,checked){checked=it;viewModel.toggleTask(task.id,it)}}
+            item(span={androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan)}){QuickActionsCard(onOpenCapture,onOpenNotes,onOpenDiary,onOpenTasks,onOpenHabits)}
+            item(span={androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan)}){SpendingHomeCard(summary?.todaySpend?:0.0,onOpenExpenses)}
+            item(span={androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan)}){SectionHeading("Latest memory","Open Timeline",onOpenTimeline)}
+            item(span={androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan)}){LatestMemoryCard(latestCapture,onOpenTimeline)}
+            item(span={androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan)}){LifeOSAiHomeCard(onOpenAiAssistant)}
         }
-        HomeFloatingActions(onCapture = onOpenCapture, onAi = onOpenAiAssistant)
+        HomeFloatingActions(onOpenCapture,onOpenAiAssistant)
     }
 }
 
@@ -118,7 +76,7 @@ fun HomeScreen(
 @Composable private fun QuickActionsCard(onCapture:()->Unit,onNotes:()->Unit,onDiary:()->Unit,onTask:()->Unit,onHabit:()->Unit){LifeOSCard{Column(Modifier.fillMaxWidth().padding(18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){LifeOSSectionHeader("Quick actions",supportingText="Capture • Write • Track • Grow");LazyRow(horizontalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=4.dp)){item{QuickAction(Icons.Filled.CameraAlt,"Capture","Photo / Video",onCapture)};item{QuickAction(Icons.Filled.NoteAlt,"Add Note","Write something",onNotes)};item{QuickAction(Icons.Filled.EditNote,"Diary","How are you?",onDiary)};item{QuickAction(Icons.Filled.AddTask,"Add Task","Stay on track",onTask)};item{QuickAction(Icons.Filled.LocalFireDepartment,"Add Habit","Build routine",onHabit)}}}}}
 @Composable private fun QuickAction(icon:androidx.compose.ui.graphics.vector.ImageVector,title:String,subtitle:String,onClick:()->Unit){Surface(onClick=onClick,shape=RoundedCornerShape(18.dp),color=MaterialTheme.colorScheme.primaryContainer.copy(alpha=.45f),modifier=Modifier.width(118.dp)){Column(Modifier.padding(12.dp),horizontalAlignment=Alignment.CenterHorizontally){LifeOSIconBadge(icon,Modifier.size(44.dp));Spacer(Modifier.height(7.dp));Text(title,style=MaterialTheme.typography.labelLarge,maxLines=1,overflow=TextOverflow.Ellipsis);Text(subtitle,style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant,maxLines=1,overflow=TextOverflow.Ellipsis)}}}
 @Composable private fun SpendingHomeCard(amount:Double,onClick:()->Unit){LifeOSCard(onClick=onClick){Row(Modifier.fillMaxWidth().padding(18.dp),verticalAlignment=Alignment.CenterVertically){Box(Modifier.size(50.dp).clip(CircleShape).background(Brush.linearGradient(LifeOSPrimaryGradient)),contentAlignment=Alignment.Center){Icon(Icons.Filled.AccountBalanceWallet,null,tint=Color.White)};Spacer(Modifier.width(14.dp));Column(Modifier.weight(1f)){Text("Today's spending",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.onSurfaceVariant);Text("₹${"%.0f".format(Locale.getDefault(),amount)}",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold);Text("Tap to open Expenses",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)};Icon(Icons.Filled.ChevronRight,null,tint=MaterialTheme.colorScheme.primary)}}}
-@Composable private fun LatestMemoryCard(capture:com.lifeos.app.data.db.entities.CaptureEntity?,onClick:()->Unit){LifeOSCard(onClick=onClick){Row(Modifier.fillMaxWidth().padding(18.dp),verticalAlignment=Alignment.CenterVertically){Surface(shape=RoundedCornerShape(16.dp),color=LifeOSVioletSoft,modifier=Modifier.size(54.dp)){Box(contentAlignment=Alignment.Center,modifier=Modifier.fillMaxSize()){Text(if(capture==null)"✨" else when(capture.type){CaptureType.PHOTO->"📷";CaptureType.VIDEO->"🎥";CaptureType.AUDIO->"🎙️"})}};Spacer(Modifier.width(14.dp));Column(Modifier.weight(1f)){Text(if(capture==null)"No memory captured yet" else captureLabel(capture.type),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold);if(capture!=null){capture.caption?.takeIf{it.isNotBlank()}?.let{Text(it,style=MaterialTheme.typography.bodyMedium,maxLines=2,overflow=TextOverflow.Ellipsis)}}};Icon(Icons.Filled.ChevronRight,null,tint=MaterialTheme.colorScheme.primary)}}}
+@Composable private fun LatestMemoryCard(capture:com.lifeos.app.data.db.entities.CaptureEntity?,onClick:()->Unit){LifeOSCard(onClick=onClick){Row(Modifier.fillMaxWidth().padding(18.dp),verticalAlignment=Alignment.CenterVertically){Surface(shape=RoundedCornerShape(16.dp),color=LifeOSVioletSoft,modifier=Modifier.size(54.dp)){Box(contentAlignment=Alignment.Center,modifier=Modifier.fillMaxSize()){Text(if(capture==null)"✨" else when(capture.type){CaptureType.PHOTO->"📷";CaptureType.VIDEO->"🎥";CaptureType.AUDIO->"🎙️";else->"💭"})}};Spacer(Modifier.width(14.dp));Column(Modifier.weight(1f)){Text(if(capture==null)"No memory captured yet" else captureLabel(capture.type),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold);if(capture!=null)capture.caption?.takeIf{it.isNotBlank()}?.let{Text(it,style=MaterialTheme.typography.bodyMedium,maxLines=2,overflow=TextOverflow.Ellipsis)}};Icon(Icons.Filled.ChevronRight,null,tint=MaterialTheme.colorScheme.primary)}}}
 @Composable private fun LifeOSAiHomeCard(onClick:()->Unit){GradientCard(modifier=Modifier.fillMaxWidth(),dark=true,onClick=onClick){Row(Modifier.fillMaxWidth().padding(18.dp),verticalAlignment=Alignment.CenterVertically){LifeOSAIOrb(size=52.dp);Spacer(Modifier.width(13.dp));Column(Modifier.weight(1f)){Text("LifeOS AI",color=Color.White,style=MaterialTheme.typography.titleLarge);Text("Offline • private • based on your local life",color=Color.White.copy(alpha=.74f),style=MaterialTheme.typography.bodySmall)};Icon(Icons.Filled.ChevronRight,null,tint=Color.White)}}}
 @Composable private fun HomeFloatingActions(onCapture:()->Unit,onAi:()->Unit){Box(Modifier.fillMaxSize()){Column(modifier=Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(end=16.dp,bottom=14.dp),horizontalAlignment=Alignment.End,verticalArrangement=Arrangement.spacedBy(10.dp)){SmallFloatingActionButton(onClick=onAi,containerColor=MaterialTheme.colorScheme.primaryContainer,contentColor=MaterialTheme.colorScheme.primary,modifier=Modifier.size(50.dp)){Icon(Icons.Filled.AutoAwesome,"Ask LifeOS AI")};ExtendedFloatingActionButton(onClick=onCapture,containerColor=MaterialTheme.colorScheme.primary,contentColor=MaterialTheme.colorScheme.onPrimary,icon={Icon(Icons.Filled.Add,null)},text={Text("Capture",fontWeight=FontWeight.SemiBold)})}}}
-private fun captureLabel(type:CaptureType)=when(type){CaptureType.PHOTO->"Photo memory";CaptureType.VIDEO->"Video memory";CaptureType.AUDIO->"Audio memory"}
+private fun captureLabel(type:CaptureType)=when(type){CaptureType.PHOTO->"Photo memory";CaptureType.VIDEO->"Video memory";CaptureType.AUDIO->"Audio memory";CaptureType.THOUGHT->"Quick thought"}
