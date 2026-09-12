@@ -40,7 +40,7 @@ fun CaptureSheet(onDismiss: () -> Unit) {
     fun save(type: CaptureType, path: String?, caption: String?, confirm: Boolean) {
         scope.launch {
             val day = DateTimeUtils.today(); val time = java.time.LocalTime.now()
-            locator.captureRepository.addCapture(type, path, caption, day.toEpochDay(), time.hour * 60 + time.minute)
+            locator.captureRepository.addCapture(type = type, filePath = path, caption = caption, dateEpochDay = day.toEpochDay(), timeMinutes = time.hour * 60 + time.minute)
             if (confirm) { captured = JustCaptured(type, path); mode = CaptureMode.CONFIRM } else onDismiss()
         }
     }
