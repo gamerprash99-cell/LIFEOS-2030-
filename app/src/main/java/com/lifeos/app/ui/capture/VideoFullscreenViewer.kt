@@ -39,9 +39,7 @@ fun VideoFullscreenViewer(filePath: String, onDismiss: () -> Unit) {
     var controlsVisible by remember { mutableStateOf(true) }
     var playbackError by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(Unit) {
-        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-    }
+    LaunchedEffect(Unit) { activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE }
     DisposableEffect(Unit) {
         onDispose {
             player?.stopPlayback()
@@ -57,67 +55,40 @@ fun VideoFullscreenViewer(filePath: String, onDismiss: () -> Unit) {
         }
     }
     LaunchedEffect(controlsVisible, playing) {
-        if (controlsVisible && playing) {
-            delay(3200)
-            controlsVisible = false
-        }
+        if (controlsVisible && playing) { delay(3200); controlsVisible = false }
     }
 
     BackHandler { onDismiss() }
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
-    ) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             if (playbackError == null) {
                 AndroidView(
-                    Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     factory = { ctx ->
                         VideoView(ctx).apply {
                             layoutParams = ViewGroup.LayoutParams(-1, -1)
                             setBackgroundColor(android.graphics.Color.BLACK)
                             setVideoURI(Uri.fromFile(File(filePath)))
-                            setOnPreparedListener { media ->
-                                duration = media.duration
-                                media.start()
-                                playing = true
-                            }
-                            setOnCompletionListener {
-                                playing = false
-                                position = duration
-                                controlsVisible = true
-                            }
-                            setOnErrorListener { _, _, _ ->
-                                playbackError = "This video could not be played on this device."
-                                true
-                            }
+                            setOnPreparedListener { media -> duration = media.duration; media.start(); playing = true }
+                            setOnCompletionListener { playing = false; position = duration; controlsVisible = true }
+                            setOnErrorListener { _, _, _ -> playbackError = "This video could not be played on this device."; true }
                             player = this
                         }
                     },
-                    update = { player = it }
+                    update = { view -> player = view }
                 )
             }
 
             Box(Modifier.matchParentSize().clickable { controlsVisible = !controlsVisible })
 
-            AnimatedVisibility(
-                visible = controlsVisible || playbackError != null,
-                modifier = Modifier.fillMaxSize(),
-                enter = fadeIn(), exit = fadeOut()
-            ) {
+            AnimatedVisibility(visible = controlsVisible || playbackError != null, modifier = Modifier.fillMaxSize(), enter = fadeIn(), exit = fadeOut()) {
                 Box(Modifier.fillMaxSize()) {
                     IconButton(onClick = onDismiss, modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(12.dp)) {
-                        Surface(shape = MaterialTheme.shapes.medium, color = Color.Black.copy(alpha = .62f)) {
-                            Icon(Icons.Filled.Close, "Close fullscreen video", tint = Color.White, modifier = Modifier.padding(10.dp))
-                        }
+                        Surface(shape = MaterialTheme.shapes.medium, color = Color.Black.copy(alpha = .62f)) { Icon(Icons.Filled.Close, "Close fullscreen video", tint = Color.White, modifier = Modifier.padding(10.dp)) }
                     }
-
-                    Surface(
-                        color = Color.Black.copy(alpha = .58f),
-                        modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 12.dp),
-                        shape = MaterialTheme.shapes.medium
-                    ) { Text("LIFEOS · VIDEO", color = Color.White, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) }
-
+                    Surface(color = Color.Black.copy(alpha = .58f), modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 12.dp), shape = MaterialTheme.shapes.medium) {
+                        Text("LIFEOS · VIDEO", color = Color.White, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp))
+                    }
                     if (playbackError != null) {
                         Column(Modifier.align(Alignment.Center).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Icon(Icons.Filled.ErrorOutline, null, tint = Color.White, modifier = Modifier.size(44.dp))
@@ -136,18 +107,9 @@ fun VideoFullscreenViewer(filePath: String, onDismiss: () -> Unit) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) { Icon(Icons.Filled.Forward10, "Forward 10 seconds", tint = Color.White); Text("10", color = Color.White, style = MaterialTheme.typography.labelSmall) }
                             }
                         }
-
                         Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 16.dp)) {
-                            Slider(
-                                value = if (duration > 0) position.toFloat() / duration else 0f,
-                                onValueChange = { position = (it * duration).toInt() },
-                                onValueChangeFinished = { player?.seekTo(position) }
-                            )
-                            Row(Modifier.fillMaxWidth()) {
-                                Text(formatDurationMs(position.toLong()), color = Color.White, style = MaterialTheme.typography.labelSmall)
-                                Spacer(Modifier.weight(1f))
-                                Text(formatDurationMs(duration.toLong()), color = Color.White, style = MaterialTheme.typography.labelSmall)
-                            }
+                            Slider(value = if (duration > 0) position.toFloat() / duration else 0f, onValueChange = { position = (it * duration).toInt() }, onValueChangeFinished = { player?.seekTo(position) })
+                            Row(Modifier.fillMaxWidth()) { Text(formatDurationMs(position.toLong()), color = Color.White, style = MaterialTheme.typography.labelSmall); Spacer(Modifier.weight(1f)); Text(formatDurationMs(duration.toLong()), color = Color.White, style = MaterialTheme.typography.labelSmall) }
                         }
                     }
                 }
@@ -156,6 +118,4 @@ fun VideoFullscreenViewer(filePath: String, onDismiss: () -> Unit) {
     }
 }
 
-private fun seek(player: VideoView?, delta: Int) {
-    player?.let { it.seekTo((it.currentPosition + delta).coerceIn(0, it.duration.coerceAtLeast(0))) }
-}
+private fun seek(player: VideoView?, delta: Int) { player?.let { it.seekTo((it.currentPosition + delta).coerceIn(0, it.duration.coerceAtLeast(0))) } }
