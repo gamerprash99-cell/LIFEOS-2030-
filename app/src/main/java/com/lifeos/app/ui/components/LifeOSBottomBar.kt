@@ -5,11 +5,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.LocalFireDepartment
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Timeline
 import androidx.compose.material3.Icon
@@ -27,7 +29,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.lifeos.app.ui.navigation.Screen
 import com.lifeos.app.ui.theme.LifeOSLavender
 import com.lifeos.app.ui.theme.LifeOSPrimary
-import com.lifeos.app.ui.theme.LifeOSPrimaryBright
 
 private data class BottomItem(
     val screen: Screen,
@@ -36,7 +37,13 @@ private data class BottomItem(
     val unselectedIcon: androidx.compose.ui.graphics.vector.ImageVector
 )
 
-private val items = listOf(
+private fun itemsForRoute(route: String?): List<BottomItem> = if (route == Screen.AiAssistant.route) listOf(
+    BottomItem(Screen.Home, "Home", Icons.Filled.Home, Icons.Outlined.Home),
+    BottomItem(Screen.Timeline, "Timeline", Icons.Filled.Timeline, Icons.Outlined.Timeline),
+    BottomItem(Screen.Tasks, "Tasks", Icons.Filled.CheckCircle, Icons.Outlined.CheckCircle),
+    BottomItem(Screen.AiAssistant, "AI Assist", Icons.Filled.AutoAwesome, Icons.Outlined.AutoAwesome),
+    BottomItem(Screen.Settings, "Settings", Icons.Filled.Settings, Icons.Outlined.Settings),
+) else listOf(
     BottomItem(Screen.Home, "Home", Icons.Filled.Home, Icons.Outlined.Home),
     BottomItem(Screen.Timeline, "Timeline", Icons.Filled.Timeline, Icons.Outlined.Timeline),
     BottomItem(Screen.Tasks, "Tasks", Icons.Filled.CheckCircle, Icons.Outlined.CheckCircle),
@@ -48,6 +55,7 @@ private val items = listOf(
 fun LifeOSBottomBar(navController: NavHostController) {
     val entry by navController.currentBackStackEntryAsState()
     val currentRoute = entry?.destination?.route
+    val items = itemsForRoute(currentRoute)
     NavigationBar(
         modifier = Modifier.fillMaxWidth(),
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = .96f),
@@ -75,7 +83,7 @@ fun LifeOSBottomBar(navController: NavHostController) {
                 label = { Text(item.label) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = LifeOSPrimary,
-                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                    selectedTextColor = LifeOSPrimary,
                     indicatorColor = LifeOSLavender.copy(alpha = .72f),
                     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant

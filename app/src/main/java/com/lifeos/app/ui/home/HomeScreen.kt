@@ -184,25 +184,17 @@ fun HomeScreen(
 
 @Composable
 private fun HomeHeader(greeting: String, date: String, onSearch: () -> Unit) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .animateContentSize()
-            .padding(top = 4.dp, bottom = 2.dp)
-    ) {
+    Column(Modifier.fillMaxWidth().animateContentSize().padding(top = 4.dp, bottom = 2.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("LifeOS", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
-                Text("Your Second Brain", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Surface(shape = RoundedCornerShape(999.dp), color = Color.White, border = androidx.compose.foundation.BorderStroke(1.dp, LifeOSLavender)) {
+                Text("☀️ ${date.ifBlank { "Today" }}", color = LifeOSPrimary, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp))
             }
-            IconButton(onClick = onSearch, modifier = Modifier.size(48.dp)) {
-                Icon(Icons.Filled.Search, "Search your life")
-            }
+            Spacer(Modifier.weight(1f))
+            Surface(shape = CircleShape, color = Color.White, border = androidx.compose.foundation.BorderStroke(2.dp, LifeOSLavender), modifier = Modifier.size(54.dp)) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("🐱") } }
+            IconButton(onClick = onSearch) { Icon(Icons.Filled.Search, "Search your life") }
         }
-        Spacer(Modifier.height(12.dp))
-        Text(greeting, style = MaterialTheme.typography.displaySmall)
-        Text(date.uppercase(Locale.getDefault()), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-        LifeOSOfflinePill(Modifier.padding(top = 7.dp))
+        Text(if (greeting.contains("morning", true)) greeting else "Good morning!", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 14.dp))
+        Text("${if (greeting.contains("morning", true)) "" else greeting} ☀️", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -422,16 +414,17 @@ private fun captureLabel(type: CaptureType) = when (type) {
 @Composable
 private fun MorningCheckInCard(onClick: () -> Unit) {
     LifeOSCard(onClick = onClick, modifier = Modifier.animateContentSize()) {
-        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(48.dp).clip(CircleShape).background(Brush.linearGradient(LifeOSSoftGradient)), contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.WbSunny, null, tint = MaterialTheme.colorScheme.primary)
+        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(64.dp).clip(RoundedCornerShape(20.dp)).background(Brush.linearGradient(LifeOSPrimaryGradient)), contentAlignment = Alignment.Center) { Text("☀️", style = MaterialTheme.typography.headlineMedium) }
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) { Text("Morning check-in ✨", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Spacer(Modifier.weight(1f)); Surface(shape=RoundedCornerShape(999.dp),color=Color(0xFFFFEAF2)){Text("Daily",color=Color(0xFFC73572),modifier=Modifier.padding(horizontal=10.dp,vertical=6.dp))} }
+                    Spacer(Modifier.height(5.dp)); Text("Take a quick photo and place it in today’s Timeline memory 📷", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text("Morning check-in", style = MaterialTheme.typography.titleMedium)
-                Text("Take a quick photo and place it in today's Timeline.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
-            }
-            Icon(Icons.Filled.CameraAlt, null, tint = MaterialTheme.colorScheme.primary)
+            HorizontalDivider(color = LifeOSLavender.copy(alpha=.45f))
+            Row(verticalAlignment = Alignment.CenterVertically) { Text("◷ Expires in 2h", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f)); Button(onClick=onClick,shape=RoundedCornerShape(18.dp),colors=ButtonDefaults.buttonColors(containerColor=LifeOSPrimary)){Icon(Icons.Filled.CameraAlt,null);Spacer(Modifier.width(8.dp));Text("Snap Photo",fontWeight=FontWeight.Bold)} }
         }
     }
 }
@@ -457,99 +450,53 @@ private fun HomeAlarmCard() {
     }
 
     LifeOSCard {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                LifeOSIconBadge(Icons.Filled.Alarm)
+                Box(Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(LifeOSPrimaryGradient)), contentAlignment = Alignment.Center) { Text("🧠", style = MaterialTheme.typography.headlineSmall) }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text("Math alarms", style = MaterialTheme.typography.titleMedium)
-                    Text("Add as many daily alarms as you need", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Math alarms 🧠✨", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("Wake your brain gently with quick puzzles", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(
-                    checked = alarms.isNotEmpty(),
-                    onCheckedChange = { checked ->
-                        if (checked) {
-                            if (notificationPermission != null && !notificationPermission.isGranted) notificationPermission.request()
-                            if (alarms.isEmpty()) {
-                                val defaultAlarm = DailyAlarm(6, 0)
-                                saveAlarms(listOf(defaultAlarm))
-                            }
-                        } else {
-                            saveAlarms(emptyList())
-                        }
-                    }
-                )
+                Switch(checked = alarms.isNotEmpty(), onCheckedChange = { checked ->
+                    if (checked) {
+                        if (notificationPermission != null && !notificationPermission.isGranted) notificationPermission.request()
+                        if (alarms.isEmpty()) saveAlarms(listOf(DailyAlarm(6, 0)))
+                    } else saveAlarms(emptyList())
+                })
             }
-
             if (alarms.isEmpty()) {
-                Surface(
-                    shape = RoundedCornerShape(18.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .38f),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.AddAlarm, null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.width(10.dp))
-                        Text("No alarms set. Turn this on or add your first alarm.", style = MaterialTheme.typography.bodyMedium)
-                    }
+                Surface(shape = RoundedCornerShape(20.dp), color = LifeOSVioletSoft.copy(alpha = .48f), modifier = Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.AddAlarm, null, tint = LifeOSPrimary); Spacer(Modifier.width(10.dp)); Text("No alarms yet. Add your first gentle brain wake-up.") }
                 }
             } else {
-                alarms.forEach { alarm ->
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .30f),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(Modifier.padding(start = 14.dp, end = 8.dp, top = 10.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary.copy(alpha = .12f), modifier = Modifier.size(40.dp)) {
-                                Box(contentAlignment = Alignment.Center) { Icon(Icons.Filled.Alarm, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp)) }
+                alarms.forEachIndexed { index, alarm ->
+                    Surface(shape = RoundedCornerShape(24.dp), color = Color.White, border = androidx.compose.foundation.BorderStroke(1.dp, LifeOSLavender), modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(14.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(shape = RoundedCornerShape(17.dp), color = if (index == 0) LifeOSVioletSoft else Color(0xFFFFEAF2), modifier = Modifier.size(54.dp)) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(if(index==0) Icons.Filled.Alarm else Icons.Filled.Notifications, null, tint = if(index==0) LifeOSPrimary else Color(0xFFE53E86), modifier = Modifier.size(26.dp)) } }
+                                Spacer(Modifier.width(12.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) { Text(String.format(Locale.getDefault(), "%02d:%02d", alarm.hour, alarm.minute), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold); Spacer(Modifier.width(8.dp)); Surface(shape=RoundedCornerShape(8.dp),color=if(index==0)LifeOSVioletSoft else Color(0xFFFFEAF2)){Text(if(index==0)"AM" else "AM",color=if(index==0)LifeOSPrimary else Color(0xFFE53E86),fontWeight=FontWeight.Bold,modifier=Modifier.padding(horizontal=8.dp,vertical=5.dp))} }
+                                    Text(if(index==0) "Every day · gentle math challenge 🧩" else "Weekdays · speed arithmetic ⚡", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Switch(checked=true,onCheckedChange={})
                             }
-                            Spacer(Modifier.width(12.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text(String.format(Locale.getDefault(), "%02d:%02d", alarm.hour, alarm.minute), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                                Text("Every day · math challenge", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            HorizontalDivider(Modifier.padding(vertical=12.dp), color = LifeOSLavender.copy(alpha=.45f))
+                            Row(verticalAlignment=Alignment.CenterVertically) {
+                                Surface(shape=RoundedCornerShape(999.dp),color=if(index==0)Color(0xFFF1ECFF) else Color(0xFFFFF4D8)){Text(if(index==0)"± Easy: 3 Puzzles" else "⚡ Medium: 5 Puzzles",color=if(index==0)LifeOSPrimary else Color(0xFFC98313),modifier=Modifier.padding(horizontal=11.dp,vertical=7.dp),style=MaterialTheme.typography.labelMedium)}
+                                Spacer(Modifier.weight(1f)); IconButton(onClick={editingAlarm=alarm;showTimePicker=true}){Icon(Icons.Filled.Edit,"Edit alarm",tint=LifeOSPrimary)};IconButton(onClick={saveAlarms(alarms.filterNot{it.minutesSinceMidnight==alarm.minutesSinceMidnight})}){Icon(Icons.Filled.DeleteOutline,"Delete alarm",tint=Color(0xFFE05D88))}
                             }
-                            IconButton(onClick = { editingAlarm = alarm; showTimePicker = true }) { Icon(Icons.Filled.Edit, "Edit alarm") }
-                            IconButton(onClick = { saveAlarms(alarms.filterNot { it.minutesSinceMidnight == alarm.minutesSinceMidnight }) }) { Icon(Icons.Filled.DeleteOutline, "Delete alarm") }
                         }
                     }
                 }
-                OutlinedButton(
-                    onClick = { editingAlarm = null; showTimePicker = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Filled.AddAlarm, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Add another alarm")
-                }
+                OutlinedButton(onClick={editingAlarm=null;showTimePicker=true},modifier=Modifier.fillMaxWidth().height(58.dp),shape=RoundedCornerShape(18.dp),border=androidx.compose.foundation.BorderStroke(1.5.dp,LifeOSSecondary.copy(alpha=.55f))){Icon(Icons.Filled.Add,null);Spacer(Modifier.width(8.dp));Text("Add new alarm",fontWeight=FontWeight.SemiBold)}
             }
-
             if (alarms.isNotEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !exactAllowed) {
-                TextButton(onClick = {
-                    context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply { data = android.net.Uri.parse("package:${context.packageName}") })
-                }) { Text("Allow exact alarm timing") }
+                TextButton(onClick={context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply{data=android.net.Uri.parse("package:${context.packageName}")})}) { Text("Allow exact alarm timing") }
             }
         }
     }
-
-    if (showTimePicker) {
-        val initial = editingAlarm ?: DailyAlarm(6, 0)
-        val state = rememberTimePickerState(initialHour = initial.hour, initialMinute = initial.minute, is24Hour = false)
-        AlertDialog(
-            onDismissRequest = { showTimePicker = false },
-            title = { Text(if (editingAlarm == null) "Add daily math alarm" else "Edit daily math alarm") },
-            text = { TimePicker(state = state) },
-            confirmButton = {
-                TextButton(onClick = {
-                    val picked = DailyAlarm(state.hour, state.minute)
-                    val updated = if (editingAlarm == null) alarms + picked else alarms.map { if (it.minutesSinceMidnight == editingAlarm!!.minutesSinceMidnight) picked else it }
-                    showTimePicker = false
-                    editingAlarm = null
-                    if (notificationPermission != null && !notificationPermission.isGranted) notificationPermission.request()
-                    saveAlarms(updated)
-                }) { Text("Save alarm") }
-            },
-            dismissButton = { TextButton(onClick = { showTimePicker = false; editingAlarm = null }) { Text("Cancel") } }
-        )
-    }
+    if(showTimePicker){val initial=editingAlarm?:DailyAlarm(6,0);val state=rememberTimePickerState(initialHour=initial.hour,initialMinute=initial.minute,is24Hour=false);AlertDialog(onDismissRequest={showTimePicker=false},title={Text(if(editingAlarm==null)"Add daily math alarm" else "Edit daily math alarm")},text={TimePicker(state)},confirmButton={TextButton(onClick={val picked=DailyAlarm(state.hour,state.minute);val updated=if(editingAlarm==null)alarms+picked else alarms.map{if(it.minutesSinceMidnight==editingAlarm!!.minutesSinceMidnight)picked else it};showTimePicker=false;editingAlarm=null;if(notificationPermission!=null&&!notificationPermission.isGranted)notificationPermission.request();saveAlarms(updated)}){Text("Save alarm")}},dismissButton={TextButton(onClick={showTimePicker=false;editingAlarm=null}){Text("Cancel")}})}
 }
+

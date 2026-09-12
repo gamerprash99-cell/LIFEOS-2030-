@@ -230,3 +230,25 @@ from reading code after the fact.
 - No architecture replacement.
 - No external AI/network dependency added.
 - Gradle verification unavailable because the supplied archive has no Gradle wrapper scripts.
+
+## 2026-09-12 — Reference screenshot UI parity pass
+
+### Changed
+- Reworked Tasks, Habits, Expenses, Add Expense, Capture, Audio Capture and LifeOS AI presentation to closely match the supplied reference screenshots.
+- Updated App Lock biometric presentation to the supplied LifeOS Safe Vault visual, while keeping Android BiometricPrompt as the actual verifier.
+- Restyled the Home morning check-in and multi-alarm area to match the supplied visual language without changing alarm persistence/scheduling behavior.
+- Added a contextual AI Assist item to the existing bottom navigation when the AI screen is open.
+- Standardized lavender/violet surfaces, rounded cards, touch targets, safe bottom spacing and lightweight animations.
+
+### Preserved
+- Existing Room database and schema.
+- Existing repositories, ViewModels, use cases, Compose Navigation and ServiceLocator DI.
+- Existing offline Intelligence Engine / AiRepository path.
+- Existing CameraX photo/video capture and MediaRecorder audio capture.
+- Existing DataStore multi-alarm settings and AlarmManager scheduling.
+- Existing secure PIN/recovery and biometric handling.
+
+### Verification
+- No Room migration was required.
+- No external AI/network dependency was added.
+- Real Gradle/emulator verification remains unavailable because the supplied archive does not include a Gradle wrapper and the coding environment has no Android SDK/Gradle executable.

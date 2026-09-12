@@ -101,3 +101,51 @@ A real Gradle/Android build and emulator/screenshot verification could not be ex
 ### Verification
 - Static source review completed for changed Kotlin files, manifest and documentation.
 - Real Android Gradle/emulator verification remains unavailable in this archive because `gradlew`/wrapper JAR and a usable Android SDK/Gradle executable are absent. No build/test pass is claimed.
+
+## 2026-09-12 — Reference UI parity pass
+
+This pass applies the supplied reference screenshots as the visual target while keeping the existing LifeOS architecture, persistence and feature behavior intact.
+
+### Updated surfaces
+- Tasks: reference-style Daily Flow & Focus header, rhythm/progress card, compact task rows, empty-state quick suggestions, rounded FAB and safe bottom clearance.
+- Habits: reference-style Habits & Rhythm header, weekly rhythm strip, richer Today’s Habits cards, progress, streak and 7/30-day analytics presentation.
+- Expenses: reference-style Money & Budget summary, category chips, recent-transaction empty state and rounded add-expense action.
+- Add Expense: converted the existing add flow into a reference-style rounded bottom sheet with amount shortcuts, merchant/note field, category selector, date/payment presentation and large save action. Existing repository write path is unchanged; payment presentation is visual only because no payment-method field exists in the current data model.
+- Capture: reference-style Quick Capture bottom sheet with 280-character counter, tags, large Save thought action and Photo/Video/Audio cards. Existing capture persistence and CameraX/MediaRecorder entry points remain unchanged.
+- Audio: reference-style full-screen audio memory surface with local-only messaging, recording timer, pulsing microphone, mood chips and large Start/Stop action. Existing MediaRecorder flow and Timeline persistence remain unchanged.
+- LifeOS AI: reference-style AI Companion header, local/private pill, suggestion chips, chat bubbles, Daily Snapshot card and floating composer. Existing local `AiRepository` and intelligence engine remain the only AI path.
+- App Lock: reference-style Safe Vault lock surface for biometric mode with fingerprint animation, secure unlock action, status cards and privacy messaging. Biometric verification is still delegated to Android `BiometricPrompt`; no biometric data is stored.
+- Home/alarm area: morning check-in and Math Alarms were visually aligned to the supplied references while preserving the existing multi-alarm DataStore and AlarmManager behavior.
+- Bottom navigation: AI Assistant now uses the reference-style `AI Assist` destination in the fourth slot while the normal app surface keeps `Habits` there. Navigation remains Compose Navigation with the existing back stack.
+
+### UX / layout
+- Rounded surfaces, lavender/violet hierarchy, larger touch targets, safe navigation-bar clearance and consistent section spacing were applied across the changed surfaces.
+- Scrollable screens continue to use Compose lazy containers so content can move under the fixed action/navigation areas without overlap.
+- Added/retained lightweight Compose animations for progress, AI orb, task completion and biometric lock emphasis.
+
+### Data / architecture
+- No Room schema, entity, DAO, repository, use-case or ViewModel architecture was replaced.
+- No external AI/API/cloud dependency was introduced.
+- No `INTERNET` permission was added.
+- No destructive database operation or migration was introduced.
+
+### Verification
+- Source-level review was performed after the UI changes.
+- The archive still has no `gradlew`/wrapper JAR, Android SDK or Gradle executable available in the coding environment, so Gradle compile, APK install and screenshot/device verification could not be truthfully run.
+
+### Files changed in this pass
+- `app/src/main/java/com/lifeos/app/ui/tasks/TasksScreen.kt`
+- `app/src/main/java/com/lifeos/app/ui/habits/HabitsScreen.kt`
+- `app/src/main/java/com/lifeos/app/ui/expenses/ExpensesScreen.kt`
+- `app/src/main/java/com/lifeos/app/ui/ai/AiAssistantScreen.kt`
+- `app/src/main/java/com/lifeos/app/ui/capture/CaptureSheet.kt`
+- `app/src/main/java/com/lifeos/app/ui/capture/AudioCaptureScreen.kt`
+- `app/src/main/java/com/lifeos/app/ui/security/AppLockScreen.kt`
+- `app/src/main/java/com/lifeos/app/ui/home/HomeScreen.kt`
+- `app/src/main/java/com/lifeos/app/ui/components/LifeOSBottomBar.kt`
+- `app/src/main/java/com/lifeos/app/ui/theme/Color.kt`
+- `app/src/main/java/com/lifeos/app/ui/theme/Shape.kt`
+- `app/src/main/java/com/lifeos/app/ui/theme/Spacing.kt`
+- `README.md`
+- `docs/17_CHANGELOG.md`
+- `docs/27_CURRENT_UI_UX_UPDATE.md`

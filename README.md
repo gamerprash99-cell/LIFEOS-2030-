@@ -420,3 +420,19 @@ This pass fixes the real-device issues reported after the previous UI redesign. 
 - The supplied project still uses its existing Gradle/Android stack; no replacement architecture or language was introduced.
 - Final device verification should cover: Home → Expenses → Home, Home → Timeline → Capture Detail → Home, video fullscreen rotation/seek, biometric setup/unlock, PIN recovery, export to Downloads, restore from a selected JSON backup, multiple daily math alarms (for example 07:00 and 20:00), and Morning Check-in capture.
 
+
+## 2026-09-12 — Reference UI parity update
+
+The latest UI pass uses the supplied reference screenshots as the visual target for Tasks, Habits, Expenses, Add Expense, Capture, Audio Memory, LifeOS AI, App Lock and the Home morning/alarm area. The implementation remains offline-first and keeps the existing Kotlin/Compose/Room/Repository/ViewModel/navigation architecture intact.
+
+Highlights:
+- Purple/violet, lavender and soft-white visual system with large rounded surfaces.
+- Reference-style task and habit progress/streak cards.
+- Reference-style expense summary and add-expense sheet.
+- Quick Capture and Audio Memory surfaces with safe-area-aware controls.
+- LifeOS AI Companion presentation with local/private messaging and smooth chat scrolling.
+- Safe Vault biometric lock presentation using Android BiometricPrompt.
+- Contextual AI Assist bottom-navigation treatment without replacing the existing navigation stack.
+- No Room schema changes, cloud AI, telemetry or `INTERNET` permission added.
+
+Verification note: this archive has no Gradle wrapper and the coding environment has no Android SDK/Gradle executable, so no build or emulator pass is claimed.
