@@ -100,7 +100,7 @@ fun ExpensesScreen(onBack: () -> Unit = {}) {
         FloatingActionButton(onClick={showAdd=true}, containerColor=LifeOSPrimary, contentColor=Color.White, shape=CircleShape, modifier=Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(end=22.dp,bottom=18.dp)) { Icon(Icons.Filled.Add, "Add expense", modifier=Modifier.size(30.dp)) }
     }
 
-    if(showAdd) ModalBottomSheet(onDismissRequest={showAdd=false}, shape=RoundedCornerShape(topStart=32.dp, topEnd=32.dp), containerColor=MaterialTheme.colorScheme.surface, dragHandle={BottomSheetDefaults.DragHandle()}) {
+    if(showAdd) ModalBottomSheet(onDismissRequest={showAdd=false}, shape=RoundedCornerShape(topStart=32.dp, topEnd=32.dp), containerColor=MaterialTheme.colorScheme.surface) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal=24.dp).padding(bottom=18.dp), verticalArrangement=Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment=Alignment.CenterVertically) { Text("Add expense ✨", style=MaterialTheme.typography.headlineMedium, fontWeight=FontWeight.Bold, modifier=Modifier.weight(1f)); Surface(shape=RoundedCornerShape(999.dp), color=LifeOSVioletSoft) { Text("🌸 LifeOS", color=LifeOSPrimary, modifier=Modifier.padding(horizontal=12.dp, vertical=7.dp)) } }
             Text("ENTER AMOUNT *", color=LifeOSPrimary, fontWeight=FontWeight.Bold)
