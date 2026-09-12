@@ -65,7 +65,12 @@ class MainActivity : FragmentActivity() {
             LifeOSTheme(darkTheme = darkTheme) {
                 CompositionLocalProvider(LocalServiceLocator provides serviceLocator) {
                     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                        LifeOSStartup { OnboardingGate(onRestoreBackup={restoreLauncher.launch(arrayOf("application/json","text/json","text/plain"))},restoreStatus=restoreStatus){AppLockGate{LifeOSNavHost()}} }
+                        LifeOSStartup {
+                            OnboardingGate(
+                                onRestoreBackup = { restoreLauncher.launch(arrayOf("application/json", "text/json", "text/plain")) },
+                                restoreStatus = restoreStatus
+                            ) { AppLockGate { LifeOSNavHost() } }
+                        }
                     }
                 }
             }
@@ -73,7 +78,53 @@ class MainActivity : FragmentActivity() {
     }
 }
 
-@Composable private fun LifeOSStartup(content:@Composable()->Unit){var showSplash by remember{mutableStateOf(true)};LaunchedEffect(Unit){delay(700);showSplash=false};Box(Modifier.fillMaxSize()){AnimatedVisibility(!showSplash,enter=fadeIn(tween(220))+scaleIn(initialScale=.99f),label="lifeos_content"){content()};AnimatedVisibility(showSplash,enter=fadeIn(tween(180)),exit=fadeOut(tween(220)),label="lifeos_splash"){LifeOSSplash()}}}
-@Composable private fun LifeOSSplash(){val transition=rememberInfiniteTransition(label="lifeos_splash_pulse");val scale by transition.animateFloat(.96f,1.04f,infiniteRepeatable(tween(900),RepeatMode.Reverse),label="splash_scale");Box(Modifier.fillMaxSize().background(Brush.verticalGradient(LifeOSDarkHeroGradient)),contentAlignment=Alignment.Center){Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(16.dp)){Box(Modifier.size(92.dp).scale(scale).background(Brush.radialGradient(listOf(Color(0xFFD8B4FE),LifeOSPrimaryBright,Color(0xFF4C1D95))),CircleShape),contentAlignment=Alignment.Center){Text("✦",color=Color.White,style=MaterialTheme.typography.displaySmall)};Text("LIFEOS",color=Color.White,style=MaterialTheme.typography.displaySmall);Text("Capture your life. Understand your life.",color=Color.White.copy(alpha=.76f),style=MaterialTheme.typography.bodyMedium)}}}
-@Composable private fun OnboardingGate(onRestoreBackup:()->Unit,restoreStatus:String?,content:@Composable()->Unit){val locator=LocalServiceLocator.current;val scope=rememberCoroutineScope();val onboardingComplete by locator.settingsStore.onboardingComplete.collectAsState(initial=false);if(onboardingComplete){AnimatedVisibility(true,enter=fadeIn()+scaleIn(initialScale=.98f),label="onboarding_gate"){content()}}else OnboardingScreen(onFinish={scope.launch{locator.settingsStore.setOnboardingComplete(true)}},onRestoreBackup=onRestoreBackup,restoreStatus=restoreStatus)}
-@Composable private fun AppLockGate(content:@Composable()->Unit){val locator=LocalServiceLocator.current;val lockType by locator.settingsStore.appLockType.collectAsState(initial=AppLockType.NONE);var unlocked by remember{mutableStateOf(false)};val lifecycleOwner=LocalLifecycleOwner.current;LaunchedEffect(lockType){unlocked=false};DisposableEffect(lifecycleOwner,lockType){val observer=LifecycleEventObserver{_,event->if(lockType!=AppLockType.NONE&&event==Lifecycle.Event.ON_STOP)unlocked=false};lifecycleOwner.lifecycle.addObserver(observer);onDispose{lifecycleOwner.lifecycle.removeObserver(observer)}};when{lockType==AppLockType.NONE->content();unlocked->content();else->AppLockScreen(lockType=lockType,onUnlocked={unlocked=true})}}
+@Composable
+private fun LifeOSStartup(content: @Composable () -> Unit) {
+    var showSplash by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) { delay(700); showSplash = false }
+    Box(Modifier.fillMaxSize()) {
+        AnimatedVisibility(!showSplash, enter = fadeIn(tween(220)) + scaleIn(initialScale = .99f), label = "lifeos_content") { content() }
+        AnimatedVisibility(showSplash, enter = fadeIn(tween(180)), exit = fadeOut(tween(220)), label = "lifeos_splash") { LifeOSSplash() }
+    }
+}
+
+@Composable
+private fun LifeOSSplash() {
+    val transition = rememberInfiniteTransition(label = "lifeos_splash_pulse")
+    val scale by transition.animateFloat(.96f, 1.04f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "splash_scale")
+    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(LifeOSDarkHeroGradient)), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Box(Modifier.size(92.dp).scale(scale).background(Brush.radialGradient(listOf(Color(0xFFD8B4FE), LifeOSPrimaryBright, Color(0xFF4C1D95))), CircleShape), contentAlignment = Alignment.Center) { Text("✦", color = Color.White, style = MaterialTheme.typography.displaySmall) }
+            Text("LIFEOS", color = Color.White, style = MaterialTheme.typography.displaySmall)
+            Text("Capture your life. Understand your life.", color = Color.White.copy(alpha = .76f), style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+@Composable
+private fun OnboardingGate(onRestoreBackup: () -> Unit, restoreStatus: String?, content: @Composable () -> Unit) {
+    val locator = LocalServiceLocator.current
+    val scope = rememberCoroutineScope()
+    val onboardingComplete by locator.settingsStore.onboardingComplete.collectAsState(initial = false)
+    if (onboardingComplete) AnimatedVisibility(true, enter = fadeIn() + scaleIn(initialScale = .98f), label = "onboarding_gate") { content() }
+    else OnboardingScreen(onFinish = { scope.launch { locator.settingsStore.setOnboardingComplete(true) } }, onRestoreBackup = onRestoreBackup, restoreStatus = restoreStatus)
+}
+
+@Composable
+private fun AppLockGate(content: @Composable () -> Unit) {
+    val locator = LocalServiceLocator.current
+    val lockType by locator.settingsStore.appLockType.collectAsState(initial = AppLockType.NONE)
+    var unlocked by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lockType) { unlocked = false }
+    DisposableEffect(lifecycleOwner, lockType) {
+        val observer = LifecycleEventObserver { _, event -> if (lockType != AppLockType.NONE && event == Lifecycle.Event.ON_STOP) unlocked = false }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    when {
+        lockType == AppLockType.NONE -> content()
+        unlocked -> content()
+        else -> AppLockScreen(lockType = lockType, onUnlocked = { unlocked = true })
+    }
+}
