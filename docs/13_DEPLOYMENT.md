@@ -120,3 +120,7 @@ previous release's signed APK/AAB available, and be able to re-publish it
 to the Play Store if a new version has a critical bug (Play Store supports
 staged rollouts and halting a rollout, which is the standard mitigation —
 but no rollout has occurred yet to reference).
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

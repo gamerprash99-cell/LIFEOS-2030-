@@ -12,7 +12,7 @@ detailed source going forward.
 
 ## Current project snapshot — 2026-09-12
 
-The 2026-09-12 pass keeps the existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and all existing features. Timeline now presents every daily memory as a compact rounded card on a cute time rail; the Home Math Alarm supports multiple customizable daily times such as 07:00 and 20:00 using local DataStore + AlarmManager; and Audio Capture now opens full-screen with safe-area-aware recording controls. The Intelligence Engine remains local/offline; no external AI API or API key is required. No Room schema change or destructive migration was introduced.
+The 2026-09-12 pass keeps the existing Kotlin + Jetpack Compose + Room + manual DI + Compose Navigation architecture and all existing features. The opening experience is now a five-screen first-launch flow: a LifeOS landing screen followed by Welcome, Privacy, Local AI and Timeline onboarding pages. Navigation is interactive, the backup entry opens Android's native JSON document picker, and restore runs through the existing `BackupRepository` path. Timeline, multi-alarm Home scheduling and full-screen Audio Capture remain intact. The Intelligence Engine stays local/offline; no external AI API or key is required. No Room schema change or destructive migration was introduced.
 
 ---
 
@@ -53,7 +53,15 @@ violet/lavender theme are preserved.
 
 ---
 
-## 2026-09-12 — Responsive UI, capture UX and App Lock reliability pass
+## 2026-09-12 — Onboarding reference UI + code cleanup pass
+
+- Replaced the old first-launch presentation with a five-screen interactive flow based on the supplied visual references: LifeOS landing, Welcome, Privacy, Local AI and Everything Connects.
+- Added safe-area-aware scrolling, responsive spacing, rounded cards, pastel violet/pink surfaces, pill indicators and gradient primary actions.
+- Wired Start your journey, Next, Skip and Get started to the existing onboarding completion state.
+- Kept Restore a LifeOS backup as a real Android `OpenDocument` JSON flow. Restore disables onboarding controls while the local repositories are updated and marks onboarding complete only after a successful import.
+- Removed clear dead UI primitives (`PrimaryButton`, `SecondaryButton`, `LifeOSMetricCard`, `LifeOSStatusPill`) and the unused duplicate `VideoFullscreenActivity` path; the active in-app video viewer remains.
+
+### 2026-09-12 — Responsive UI, capture UX and App Lock reliability pass
 
 The latest implementation pass is focused on the problems found during device review. Existing features, Kotlin/Compose/Room/manual-DI/Compose-Navigation architecture and local data model are preserved. No Room schema change or destructive migration was introduced.
 
@@ -91,7 +99,7 @@ See [`docs/27_CURRENT_UI_UX_UPDATE.md`](./docs/27_CURRENT_UI_UX_UPDATE.md) for t
 | Habits list analytics | ✅ Each habit row shows current/best streak plus 7-day and 30-day completion directly on the list |
 | Audio capture (MediaRecorder) | ✅ Real start/stop recording to app-private storage |
 | Task & Habit reminders (WorkManager + notifications) | ✅ Per-item precise scheduling (not polling); Material3 time picker wired into the Add Task/Add Habit dialogs; notification permission requested only when the user turns Reminders on in Settings |
-| Onboarding flow | ✅ 4-page first-launch intro + restore-backup entry point |
+| Onboarding flow | ✅ 5-screen first-launch experience + restore-backup entry point; Start/Next/Get started/Skip are wired |
 | Glassmorphism + LifeOS component system | ✅ shared `LifeOSDesignSystem.kt` primitives plus existing `GlassCard`/`GlassChip`; restrained Material 3 surfaces |
 
 ## What's intentionally out of scope for this scaffold
@@ -250,7 +258,7 @@ This is the current UI implementation baseline. The existing Kotlin + Jetpack Co
 - Timeline date/time filtering now uses the device timezone correctly instead of raw UTC-day arithmetic.
 - Video fullscreen now stays inside the existing MainActivity dialog instead of launching a separate fullscreen Activity; it uses landscape orientation, Back handling, play/pause, seek -10/+10 seconds, progress scrubber and playback error UI.
 - Video preview now has real play/pause behavior and fullscreen entry.
-- Startup now has a short animated LifeOS splash.
+- First launch now opens the five-screen LifeOS onboarding experience; the old animated splash-only presentation was replaced by the interactive landing screen.
 - Settings now exposes the existing dark-theme preference while preserving the same purple/violet brand.
 - App Lock continues to expose None, Biometric and PIN + recovery; no biometric data is stored by LifeOS.
 - Backup export/restore continues to use Android's native document picker so the user chooses the local destination/source.
@@ -420,19 +428,3 @@ This pass fixes the real-device issues reported after the previous UI redesign. 
 - The supplied project still uses its existing Gradle/Android stack; no replacement architecture or language was introduced.
 - Final device verification should cover: Home → Expenses → Home, Home → Timeline → Capture Detail → Home, video fullscreen rotation/seek, biometric setup/unlock, PIN recovery, export to Downloads, restore from a selected JSON backup, multiple daily math alarms (for example 07:00 and 20:00), and Morning Check-in capture.
 
-
-## 2026-09-12 — Reference UI parity update
-
-The latest UI pass uses the supplied reference screenshots as the visual target for Tasks, Habits, Expenses, Add Expense, Capture, Audio Memory, LifeOS AI, App Lock and the Home morning/alarm area. The implementation remains offline-first and keeps the existing Kotlin/Compose/Room/Repository/ViewModel/navigation architecture intact.
-
-Highlights:
-- Purple/violet, lavender and soft-white visual system with large rounded surfaces.
-- Reference-style task and habit progress/streak cards.
-- Reference-style expense summary and add-expense sheet.
-- Quick Capture and Audio Memory surfaces with safe-area-aware controls.
-- LifeOS AI Companion presentation with local/private messaging and smooth chat scrolling.
-- Safe Vault biometric lock presentation using Android BiometricPrompt.
-- Contextual AI Assist bottom-navigation treatment without replacing the existing navigation stack.
-- No Room schema changes, cloud AI, telemetry or `INTERNET` permission added.
-
-Verification note: this archive has no Gradle wrapper and the coding environment has no Android SDK/Gradle executable, so no build or emulator pass is claimed.

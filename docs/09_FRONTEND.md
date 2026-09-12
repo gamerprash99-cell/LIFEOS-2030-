@@ -186,3 +186,7 @@ The shared UI system now uses purple/violet tokens, 8dp spacing, 20dp screen pad
 - **Math alarms:** Home now renders a list of user-selected daily times with Add, Edit and Delete actions. The list is stored in DataStore; AlarmManager remains the scheduler.
 - **Audio capture:** Audio opens in the same full-screen Dialog boundary as Photo/Video, with status/navigation insets, a clear recording state, timer, microphone affordance and Stop & Save action.
 - **Architecture:** no navigation, Room, repository, use-case, ViewModel or DI replacement was introduced.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

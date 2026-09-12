@@ -40,10 +40,6 @@
         </activity>
 
         <activity
-            android:name=".ui.capture.VideoFullscreenActivity"
-            android:exported="false" />
-
-        <activity
             android:name=".ui.settings.AlarmChallengeActivity"
             android:exported="false" />
 

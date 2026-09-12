@@ -20,7 +20,7 @@ acts as a single, private, all-in-one personal life-management tool. It combines
   into one chronological story of the user's day
 - **Capture** — a quick way to save a photo, video, voice note, or text thought
   in the moment
-- **AI Assistant** *(optional)* — the user can connect their own AI key to get
+- **AI Assistant** *(optional)* — local Intelligence features run on-device; no AI key or cloud connection is required. Historical provider wording elsewhere in this document is superseded by the current implementation.
   note summaries, automatic task extraction from notes, diary drafting help,
   and a weekly review, all opt-in and reviewable before anything is saved
 
@@ -102,3 +102,7 @@ crash-reporting SDK, no ads SDK, no payments SDK) is present in the codebase.
 lists deferred features that are implied by code comments (e.g. "left as a
 Phase 6 hardening item") but there is no separate product roadmap file in
 the repository to source this from independently.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

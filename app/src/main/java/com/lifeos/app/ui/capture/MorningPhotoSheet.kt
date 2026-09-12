@@ -33,7 +33,7 @@ fun MorningPhotoSheet(onDismiss: () -> Unit) {
                         onCaptured = { path ->
                             scope.launch {
                                 val now = java.time.LocalTime.now()
-                                locator.captureRepository.addCapture(type = CaptureType.PHOTO, filePath = path, caption = "Morning check-in", dateEpochDay = DateTimeUtils.today().toEpochDay(), timeMinutes = now.hour * 60 + now.minute)
+                                locator.captureRepository.addCapture(CaptureType.PHOTO, path, "Morning check-in", DateTimeUtils.today().toEpochDay(), now.hour * 60 + now.minute)
                                 savedPath = path
                             }
                         },

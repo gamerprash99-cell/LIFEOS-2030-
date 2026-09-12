@@ -1,4 +1,4 @@
-> **CURRENT FLOW — 2026-09-11:** User input → Compose screen/ViewModel → existing use case/repository → Room/DataStore/local files. Intelligence is `LifeOSIntelligenceEngine` on-device. There is no outbound Anthropic/API flow in the current build.
+> **CURRENT FLOW — 2026-09-12:** User input → Compose screen/ViewModel → existing use case/repository → Room/DataStore/local files. Intelligence is `LifeOSIntelligenceEngine` on-device. Backup restore is Android document picker → `BackupRepository` → existing repositories → Room. There is no outbound AI/API flow in the current build.
 
 # 25 — Data Flow
 
@@ -112,3 +112,7 @@ USER taps "Export backup" in Settings
 ## 2026-09-12 current note
 
 Current AI data flow ends at the local `LifeOSIntelligenceEngine`; there is no outbound HTTP hop. Historical network flow text is retained below for traceability.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

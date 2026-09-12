@@ -89,7 +89,7 @@ comments across the source files cited above.
 
 ## User journeys (as implemented)
 
-1. **First launch** → `OnboardingScreen` (4 pages) → optional `AppLockGate`
+1. **First launch** → `OnboardingScreen` (5 interactive screens) → optional `AppLockGate`
    (only if enabled in Settings) → `HomeScreen`.
 2. **Daily use** → `HomeScreen` shows today's tasks/habits/spend → user taps
    into Tasks/Habits/Notes/Diary/Expenses/Timeline/Search/AI Assistant via
@@ -105,3 +105,7 @@ comments across the source files cited above.
 ⚠️ **NOT VERIFIED FROM CODEBASE** — no prioritization/backlog document
 exists in the repo. All implemented features currently ship at equal
 priority (i.e., all are reachable from the main navigation).
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

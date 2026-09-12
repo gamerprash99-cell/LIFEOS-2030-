@@ -50,8 +50,8 @@ Audio capture now enters the same full-screen Dialog boundary used by Photo/Vide
 ### Alarm
 Daily math alarm scheduling remains local. Each alarm challenge uses a fresh random addition/subtraction problem with a non-negative answer below 99 and the alarm cannot be dismissed through the Android Back button.
 
-### Startup
-A short animated LifeOS splash now provides a branded startup transition before onboarding/app-lock/content.
+### Startup / onboarding
+The first-launch experience now uses five interactive screens matching the supplied references: LifeOS landing, Welcome, Privacy, Local AI, and Everything Connects. The landing screen has a working “Start your journey” action; the next pages use working Next/Skip/Get started controls. Restore uses Android’s native JSON document picker and runs through the existing `BackupRepository`. Safe-area-aware vertical scrolling prevents clipping on smaller phones.
 
 ## Architecture boundary
 
@@ -65,3 +65,7 @@ This pass intentionally did not introduce a new navigation framework, database, 
 - `core/reminders/AlarmScheduler.kt` — independent PendingIntent scheduling per daily time.
 - `core/reminders/AlarmReceiver.kt` and `BootReceiver.kt` — multi-alarm rescheduling and legacy receiver compatibility.
 - `ui/capture/CaptureSheet.kt` and `ui/capture/AudioCaptureScreen.kt` — full-screen Audio Capture and clearer recording UX.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

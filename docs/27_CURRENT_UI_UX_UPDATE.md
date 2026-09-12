@@ -1,5 +1,27 @@
 # 27 — Current UI/UX Update — 2026-09-12
 
+## Five-screen onboarding refresh — 2026-09-12
+
+The first-launch experience was rebuilt to follow the newly supplied visual references while keeping the existing onboarding state and restore logic. The sequence is now:
+
+1. **LifeOS** — pastel landing screen with the branded orb, privacy pill, progress dots and working **Start your journey ✨** action.
+2. **Welcome to LifeOS** — rounded content card with the supplied copy and working **Next →** action.
+3. **Your life. Your data.** — privacy-focused card with Private/Offline badges and the local-data safety message.
+4. **AI, on your terms** — 100% Offline/Gentle Assistant badges and local Intelligence copy.
+5. **Everything connects** — Timeline connection message with **Get started** completion action.
+
+### Interaction and restore behavior
+- The landing action advances to the first information page; it does not prematurely mark onboarding complete.
+- Next advances one page at a time. Skip completes onboarding from the information pages. Get started completes onboarding on the final page.
+- Restore remains available on the information pages and opens Android's native JSON document picker.
+- During restore, onboarding actions are disabled. A successful import marks onboarding complete; a failed/invalid import keeps the user in onboarding and shows the error status.
+- The UI uses safe-area insets plus a scroll fallback so content remains reachable on short phones and with larger font scaling.
+
+### Code cleanup
+- Removed unused `PrimaryButton`, `SecondaryButton`, `LifeOSMetricCard` and `LifeOSStatusPill` from the shared design system.
+- Removed the unreferenced duplicate `VideoFullscreenActivity`; the active `VideoFullscreenViewer` path remains in place.
+
+
 ## Scope
 This document records the current UI/UX and reliability pass requested after device screenshots were reviewed. It is intentionally additive: existing features and architecture are preserved.
 
@@ -76,7 +98,7 @@ No Room schema change or destructive migration was introduced by this pass.
 - `README.md`, `docs/04_FEATURES.md`, `docs/09_FRONTEND.md`, `docs/16_KNOWN_ISSUES.md`, `docs/17_CHANGELOG.md`, `docs/26_UI_UX_IMPLEMENTATION.md`, `docs/DOCUMENTATION_AUDIT.md` — current project documentation.
 
 ## Verification
-Static source checks completed after editing: all 100 Kotlin source files were scanned for balanced braces/parentheses, and the manifest/source tree was checked for unexpected network permissions or cloud AI endpoints.
+Static source checks completed after editing: all 99 Kotlin source files were scanned for balanced braces/parentheses, and the manifest/source tree was checked for unexpected network permissions or cloud AI endpoints.
 
 A real Gradle/Android build and emulator/screenshot verification could not be executed because the supplied archive has no `gradlew`/wrapper JAR and the coding environment has neither a Gradle executable nor Android SDK. This is recorded rather than claiming a build passed.
 
@@ -102,50 +124,6 @@ A real Gradle/Android build and emulator/screenshot verification could not be ex
 - Static source review completed for changed Kotlin files, manifest and documentation.
 - Real Android Gradle/emulator verification remains unavailable in this archive because `gradlew`/wrapper JAR and a usable Android SDK/Gradle executable are absent. No build/test pass is claimed.
 
-## 2026-09-12 — Reference UI parity pass
+## 2026-09-12 — Current-state documentation refresh
 
-This pass applies the supplied reference screenshots as the visual target while keeping the existing LifeOS architecture, persistence and feature behavior intact.
-
-### Updated surfaces
-- Tasks: reference-style Daily Flow & Focus header, rhythm/progress card, compact task rows, empty-state quick suggestions, rounded FAB and safe bottom clearance.
-- Habits: reference-style Habits & Rhythm header, weekly rhythm strip, richer Today’s Habits cards, progress, streak and 7/30-day analytics presentation.
-- Expenses: reference-style Money & Budget summary, category chips, recent-transaction empty state and rounded add-expense action.
-- Add Expense: converted the existing add flow into a reference-style rounded bottom sheet with amount shortcuts, merchant/note field, category selector, date/payment presentation and large save action. Existing repository write path is unchanged; payment presentation is visual only because no payment-method field exists in the current data model.
-- Capture: reference-style Quick Capture bottom sheet with 280-character counter, tags, large Save thought action and Photo/Video/Audio cards. Existing capture persistence and CameraX/MediaRecorder entry points remain unchanged.
-- Audio: reference-style full-screen audio memory surface with local-only messaging, recording timer, pulsing microphone, mood chips and large Start/Stop action. Existing MediaRecorder flow and Timeline persistence remain unchanged.
-- LifeOS AI: reference-style AI Companion header, local/private pill, suggestion chips, chat bubbles, Daily Snapshot card and floating composer. Existing local `AiRepository` and intelligence engine remain the only AI path.
-- App Lock: reference-style Safe Vault lock surface for biometric mode with fingerprint animation, secure unlock action, status cards and privacy messaging. Biometric verification is still delegated to Android `BiometricPrompt`; no biometric data is stored.
-- Home/alarm area: morning check-in and Math Alarms were visually aligned to the supplied references while preserving the existing multi-alarm DataStore and AlarmManager behavior.
-- Bottom navigation: AI Assistant now uses the reference-style `AI Assist` destination in the fourth slot while the normal app surface keeps `Habits` there. Navigation remains Compose Navigation with the existing back stack.
-
-### UX / layout
-- Rounded surfaces, lavender/violet hierarchy, larger touch targets, safe navigation-bar clearance and consistent section spacing were applied across the changed surfaces.
-- Scrollable screens continue to use Compose lazy containers so content can move under the fixed action/navigation areas without overlap.
-- Added/retained lightweight Compose animations for progress, AI orb, task completion and biometric lock emphasis.
-
-### Data / architecture
-- No Room schema, entity, DAO, repository, use-case or ViewModel architecture was replaced.
-- No external AI/API/cloud dependency was introduced.
-- No `INTERNET` permission was added.
-- No destructive database operation or migration was introduced.
-
-### Verification
-- Source-level review was performed after the UI changes.
-- The archive still has no `gradlew`/wrapper JAR, Android SDK or Gradle executable available in the coding environment, so Gradle compile, APK install and screenshot/device verification could not be truthfully run.
-
-### Files changed in this pass
-- `app/src/main/java/com/lifeos/app/ui/tasks/TasksScreen.kt`
-- `app/src/main/java/com/lifeos/app/ui/habits/HabitsScreen.kt`
-- `app/src/main/java/com/lifeos/app/ui/expenses/ExpensesScreen.kt`
-- `app/src/main/java/com/lifeos/app/ui/ai/AiAssistantScreen.kt`
-- `app/src/main/java/com/lifeos/app/ui/capture/CaptureSheet.kt`
-- `app/src/main/java/com/lifeos/app/ui/capture/AudioCaptureScreen.kt`
-- `app/src/main/java/com/lifeos/app/ui/security/AppLockScreen.kt`
-- `app/src/main/java/com/lifeos/app/ui/home/HomeScreen.kt`
-- `app/src/main/java/com/lifeos/app/ui/components/LifeOSBottomBar.kt`
-- `app/src/main/java/com/lifeos/app/ui/theme/Color.kt`
-- `app/src/main/java/com/lifeos/app/ui/theme/Shape.kt`
-- `app/src/main/java/com/lifeos/app/ui/theme/Spacing.kt`
-- `README.md`
-- `docs/17_CHANGELOG.md`
-- `docs/27_CURRENT_UI_UX_UPDATE.md`
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

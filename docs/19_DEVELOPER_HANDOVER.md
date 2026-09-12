@@ -108,7 +108,7 @@ for a new developer to be aware of immediately:
    readable if the device/emulator storage were inspected directly
 4. Full Android build/device verification remains to be performed in an
    Android Studio environment; do not treat source-level review as a build pass
-5. Zero automated tests exist despite test frameworks being declared as dependencies
+5. Automated coverage is still minimal; the onboarding flow has a Compose UI regression test, while the wider app remains largely untested
 
 ## Future work
 
@@ -117,11 +117,8 @@ See docs/18_ROADMAP.md — organized as NOW / NEXT / LATER / FUTURE.
 ## Security warnings
 
 - Do not add external AI API keys or cloud AI dependencies to LifeOS —
-  the app is specifically designed so the key is a runtime, user-entered
-  value, never a build-time secret. If you ever add a "default" or
-  "developer" key for testing convenience, make absolutely sure it's kept
-  out of version control — none of that plumbing exists yet, so you'd be
-  adding it fresh.
+  the current Intelligence Engine is intentionally local and keyless. Any
+  future optional on-device model must preserve the same privacy boundary.
 - Do not enable fallbackToDestructiveMigration() on the Room database
   builder in a release build — it silently wipes all user data on any
   schema mismatch. See docs/15_TROUBLESHOOTING.md.
@@ -161,3 +158,7 @@ from the code is worse than no documentation, because it's actively misleading.
 ## 2026-09-12 current note
 
 The current AI path is fully local: `core/ai/AiRepository.kt` delegates to `core/intelligence/LifeOSIntelligenceEngine`. Do not expect or restore `AiClient.kt`.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

@@ -142,12 +142,12 @@ Full inventory of every implemented feature, with exact file paths.
 
 - **Files**: `data/repository/BackupRepository.kt`, wired into `ui/settings/SettingsScreen.kt`
 - **How it works**: `buildBackup()` collects every table into one LifeOSBackup object, serialized to pretty-printed JSON via kotlinx.serialization, written to context.filesDir (app-private storage). "Share" uses androidx.core.content.FileProvider (declared in AndroidManifest.xml + res/xml/file_paths.xml) to hand the file to any share target.
-- **Import**: `BackupRepository.importFromFile()` exists and is fully implemented, but ⚠️ no Settings UI button currently calls it — restore is code-complete but not user-reachable yet.
+- **Import**: first-launch onboarding and Settings expose Android's JSON document picker; selected backups are restored through `BackupRepository` and the existing repositories/Room path.
 - **Status**: Partially implemented (export: complete and reachable; import: complete but not wired to any UI)
 
 ## 15. Onboarding
 
-**Purpose**: 4-page first-launch introduction.
+**Purpose**: 5-screen first-launch introduction with an interactive landing screen, Welcome, Privacy, local AI, and Timeline connection pages.
 
 - **Files**: `ui/onboarding/OnboardingScreen.kt`, gated in `MainActivity.kt`'s `OnboardingGate`
 - **Status**: Implemented — shown once, persisted via `SettingsStore.onboardingComplete`
@@ -195,3 +195,7 @@ the existing LifeOS memory timeline.
   aggregation.
 - **Permissions**: Camera permission is requested only when the user chooses
   the morning photo action.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

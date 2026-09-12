@@ -22,3 +22,7 @@ LifeOS UI talks to existing repositories/use cases through the hand-written `Ser
 - User data remains on-device unless the user explicitly exports/shares it through Android.
 
 Any older provider/API material that may exist in historical notes is superseded by this current implementation. Do not reintroduce a network dependency just to provide an AI-like UI.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

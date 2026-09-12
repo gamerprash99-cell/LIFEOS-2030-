@@ -210,3 +210,7 @@ storage path.
 ## 2026-09-12 current note
 
 The current app has no cloud AI API key, no OkHttp network client, and no `INTERNET` permission. Historical API-key risks below are retained for audit/history only.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

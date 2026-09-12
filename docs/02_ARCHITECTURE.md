@@ -186,3 +186,7 @@ Full ADRs are in `docs/24_ARCHITECTURAL_DECISIONS.md`. Headlines:
 ## 2026-09-12 current architecture clarification
 
 The current source tree has no `AiClient.kt`, HTTP client, or outbound AI request path. The local path is `ui → ViewModel → AiRepository → LifeOSIntelligenceEngine` plus existing repositories for real app data. Historical cloud-AI descriptions earlier in this document are preserved as history, not as current implementation requirements.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

@@ -24,9 +24,10 @@ any server you control. It's called "Room" (a Google technology) and under
 the hood it's SQLite, a very common, simple database format.
 
 **API (Application Programming Interface)** — a way for one piece of
-software to ask another piece of software to do something. Your app has one
-API connection: to Anthropic (the company behind Claude AI), and only when
-the user turns AI features on and enters their own key.
+software to ask another piece of software to do something. The current
+LifeOS app has no external HTTP/API integration. Its feature boundaries are
+local interfaces between Compose, ViewModels, use cases, repositories,
+Room/DataStore, local media storage and the on-device Intelligence Engine.
 
 **GitHub** — a website where code is stored, versioned, and where
 developers collaborate. Think of it as "Google Drive for code, with a
@@ -50,9 +51,8 @@ available to real users (publishing an app to the Play Store, for example).
 Your app has not been deployed anywhere yet.
 
 **Environment variables** — settings/secrets (like passwords or API keys)
-that are kept *outside* the code itself, so they're not accidentally shared
-publicly. Your app doesn't currently use any at build time — the one "key"
-it needs (the AI key) is typed in by each user, inside the running app.
+that are kept *outside* the code itself. The current LifeOS app has no
+external AI/API key requirement and no runtime cloud secret.
 
 **Authentication** — the process of a user proving who they are (logging
 in). **Your app has none of this.** There's no login screen and no
@@ -74,14 +74,16 @@ instead of your developer writing everything from zero. Listed in full in
 
 Your app is a single Android app (no website, no server). When a user opens
 it:
-1. The **frontend** (the Compose screens) shows them the Home dashboard.
+1. The **frontend** (the Compose screens) shows the five-screen first-launch
+   onboarding flow before entering the main app.
 2. Any data they create (a note, a task, a habit) is saved straight into the
    **database** that lives on their own phone.
-3. If they turn on AI features and paste in their own Anthropic **API** key,
-   certain buttons (like "Summarize this note") send a small piece of text
-   to Anthropic's servers and show back the AI's response — but only when
-   the user explicitly taps that button.
-4. There is no **backend** and no **authentication** — nothing is uploaded
+3. Optional LifeOS Intelligence analyzes local data on-device using the
+   existing deterministic engine; it does not call a cloud AI provider.
+4. A user can explicitly choose a JSON backup through Android's document
+   picker. Restore imports it through `BackupRepository` and the existing
+   repositories/Room path.
+5. There is no **backend** and no **authentication** — nothing is uploaded
    anywhere by default, and there's no "your account" concept at all.
 
 ---
@@ -89,10 +91,10 @@ it:
 ## "If a developer asks me..." — answers based on your actual repository
 
 **Q: What stack did you use?**
-A: Kotlin and Jetpack Compose (Android's current, official native UI
-toolkit), a local Room/SQLite database, and Anthropic's API for optional AI
-features. No backend, no Firebase, no cross-platform framework — it's a
-native Android app.
+A: Kotlin and Jetpack Compose, a local Room/SQLite database, DataStore,
+CameraX/MediaRecorder for capture, and the on-device LifeOS Intelligence
+Engine. No backend, Firebase, cloud AI provider, or mandatory network API is
+used.
 
 **Q: Why did you choose this stack?**
 ⚠️ NOT VERIFIED FROM CODEBASE as a documented rationale — but based on what
@@ -118,11 +120,9 @@ optional fingerprint/PIN lock on the whole app, which uses the phone's own
 built-in security, not a LifeOS account system.
 
 **Q: How does the AI work?**
-A: The user pastes their own Anthropic API key into Settings. From then on,
-certain buttons across the app (on notes, in the diary, in a weekly review,
-and a chat screen) send a small, specific piece of text to Anthropic and
-show the response — nothing is sent automatically or in the background, and
-every AI suggestion has to be manually approved before it's saved.
+A: LifeOS Intelligence runs locally. It uses deterministic analysis,
+lexicons, rules, statistics and templates over local notes, diary, tasks,
+habits and other stored data. No external API key or cloud service is needed.
 
 **Q: How do you deploy it?**
 A: Not yet — this is a gap (see `docs/13_DEPLOYMENT.md`). There's no
@@ -141,26 +141,25 @@ and ready to use (`docs/14_TESTING.md`).
 
 **Q: What remains to be built?**
 A: See `docs/18_ROADMAP.md`. In priority order: get it actually building
-from a clean checkout, set up release signing, encrypt the local database
-and the stored AI key, wire up the "restore backup" button, and add
-automated tests. Bigger future ideas (accounts, cloud sync, smarter search)
+from a clean checkout, set up release signing, encrypt the local database,
+expand automated tests, and implement true recurring-task rollover. Bigger future ideas (accounts, cloud sync, smarter search)
 are further out and would be significant new projects, not small additions.
 
 **Q: What are the biggest technical risks?**
-A: 1) The database and the AI key aren't encrypted yet, which matters a lot
-given this app stores diary entries and personal notes — this should be
-fixed before real users trust it with real data. 2) There are no automated
-tests, so changes are only verified by hand right now. 3) The app has never
-been confirmed to actually compile and run end-to-end in a real build
-environment — that first real build is an important checkpoint.
+A: 1) The local database is not encrypted at rest yet, which matters for an
+app containing diary entries and personal notes. 2) Automated test coverage
+is still limited, so regression checking is not yet comprehensive. 3) The
+supplied archive has no Gradle wrapper and has not been verified by a real
+Android SDK/Gradle build in this environment.
 
 ---
 
 ## What "complete" actually means for your app right now
 
 Every core feature (Notes, Tasks, Habits, Expenses, Diary, Timeline,
-Search, Capture, AI, App Lock, Backup/Export) has real, working code behind
-it — this is not a mockup or a prototype with fake buttons. What's
+Search, Capture, local Intelligence, App Lock, Backup/Export/Restore and
+the five-screen onboarding flow) has real code behind it — this is not a
+mockup or a prototype with fake buttons. What's
 **not** complete is everything *around* the app: it hasn't been built and
 run in a real environment yet, it isn't signed for release, it isn't on the
 Play Store, and it doesn't have encryption on sensitive data yet. Think of
@@ -169,4 +168,8 @@ lock installed yet, and it hasn't had its final safety inspection.**
 
 ## 2026-09-12 current note
 
-Current product behavior is fully offline. Older Anthropic/API-key explanations in this guide describe a previous implementation and are historical only.
+Current product behavior is fully offline. The current app uses the on-device LifeOS Intelligence Engine and requires no Anthropic/API key or external AI service. Older Anthropic/API-key explanations in this guide describe a previous implementation and are historical only.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

@@ -198,3 +198,7 @@ The current archive still lacks the Gradle wrapper scripts and the coding enviro
 - **Description**: The previous Home alarm UI stored one hour/minute pair, preventing schedules such as 07:00 and 20:00 at the same time.
 - **Fix**: Added a locally persisted list of daily times with Add/Edit/Delete UI and independent AlarmManager PendingIntents. Existing single-alarm keys remain a migration fallback.
 - **Status**: Resolved 2026-09-12.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

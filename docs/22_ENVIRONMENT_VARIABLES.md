@@ -47,3 +47,7 @@ signing keystore password), the standard, safe Android pattern is:
 2. Read it in app/build.gradle.kts via Properties() loaded from that file
 3. Expose it to code only via BuildConfig fields, never hardcoded in a .kt file
 4. Ensure the properties file is listed in .gitignore
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

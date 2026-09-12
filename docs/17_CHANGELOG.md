@@ -1,5 +1,24 @@
 # 17 — Changelog
 
+## 2026-09-12 — Five-screen onboarding reference UI + dead-code cleanup
+
+### Changed
+- Replaced the old first-launch UI with a five-screen interactive flow: LifeOS landing, Welcome, Your life/Your data, AI on your terms, and Everything connects.
+- Added responsive safe-area spacing, vertical scrolling for compact devices, pastel violet/pink background treatment, rounded cards, status pills, page indicators and gradient actions based on the supplied references.
+- Added a real landing action (`Start your journey`) and retained working Next, Skip and Get started behavior through the existing DataStore onboarding flag.
+- Kept first-launch `Restore a LifeOS backup` connected to Android `OpenDocument`; JSON is imported through the existing `BackupRepository` and repositories without recreating Room.
+- Removed four unused design-system primitives and the unused duplicate `VideoFullscreenActivity`/manifest path.
+
+### Preserved
+- Existing Kotlin/Compose/Room/manual ServiceLocator/Compose Navigation architecture.
+- Existing feature repositories, use cases, ViewModels, media capture, timeline, alarms, App Lock and offline Intelligence Engine.
+- No Room schema change, destructive migration, cloud AI dependency or telemetry was introduced.
+
+### Verification
+- Source-level audit and structural checks completed in this environment.
+- Real Android build/emulator verification remains unavailable because the supplied archive has no Gradle wrapper/JAR and the environment has no Android SDK/Gradle executable.
+
+
 ## 2026-09-12 — Responsive UI, capture UX and App Lock reliability
 
 ### Changed
@@ -231,24 +250,6 @@ from reading code after the fact.
 - No external AI/network dependency added.
 - Gradle verification unavailable because the supplied archive has no Gradle wrapper scripts.
 
-## 2026-09-12 — Reference screenshot UI parity pass
+## 2026-09-12 — Current-state documentation refresh
 
-### Changed
-- Reworked Tasks, Habits, Expenses, Add Expense, Capture, Audio Capture and LifeOS AI presentation to closely match the supplied reference screenshots.
-- Updated App Lock biometric presentation to the supplied LifeOS Safe Vault visual, while keeping Android BiometricPrompt as the actual verifier.
-- Restyled the Home morning check-in and multi-alarm area to match the supplied visual language without changing alarm persistence/scheduling behavior.
-- Added a contextual AI Assist item to the existing bottom navigation when the AI screen is open.
-- Standardized lavender/violet surfaces, rounded cards, touch targets, safe bottom spacing and lightweight animations.
-
-### Preserved
-- Existing Room database and schema.
-- Existing repositories, ViewModels, use cases, Compose Navigation and ServiceLocator DI.
-- Existing offline Intelligence Engine / AiRepository path.
-- Existing CameraX photo/video capture and MediaRecorder audio capture.
-- Existing DataStore multi-alarm settings and AlarmManager scheduling.
-- Existing secure PIN/recovery and biometric handling.
-
-### Verification
-- No Room migration was required.
-- No external AI/network dependency was added.
-- Real Gradle/emulator verification remains unavailable because the supplied archive does not include a Gradle wrapper and the coding environment has no Android SDK/Gradle executable.
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

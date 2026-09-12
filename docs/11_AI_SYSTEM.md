@@ -121,3 +121,7 @@ redesigning this facade or touching any UI call site.
 The current implementation is local-only. `AiRepository` delegates to the
 on-device `LifeOSIntelligenceEngine`; no Anthropic/OpenAI/Gemini/OpenRouter
 API, API key, HTTP client, or cloud endpoint is required by released LifeOS.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

@@ -10,11 +10,11 @@ object LifeOSSpacing {
     val lg = 24.dp
     val xl = 32.dp
     val xxl = 48.dp
-    val screenPadding = 22.dp
+    val screenPadding = 20.dp
     val compactScreenPadding = 16.dp
     val cardSpacing = 12.dp
     val cardPadding = 20.dp
-    val sectionSpacing = 24.dp
+    val sectionSpacing = 28.dp
     val fabContentClearance = 112.dp
     val extendedFabContentClearance = 132.dp
     val bottomNavHeight = 80.dp

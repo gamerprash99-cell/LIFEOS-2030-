@@ -35,7 +35,7 @@ Items are sequenced by how blocking they are to shipping anything real.
 
 ### Encrypt the database and the stored AI API key
 - **Goal**: Close the two 🟠 HIGH findings in `docs/08_SECURITY.md`
-- **User benefit**: Personal diary/notes data and the user's AI key are protected even if the device is compromised
+- **User benefit**: Personal diary/notes data and local personal data is protected even if the device is compromised
 - **Technical work**: Adopt SQLCipher for Room; use Jetpack Security's `EncryptedFile`/encrypted preferences for the API key
 - **Dependencies**: None
 - **Complexity**: Medium
@@ -134,3 +134,7 @@ groundwork laid yet:
 
 Each of these is a substantial project in its own right and should get its
 own ADR (`docs/24_ARCHITECTURAL_DECISIONS.md`) and feature spec before work starts.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

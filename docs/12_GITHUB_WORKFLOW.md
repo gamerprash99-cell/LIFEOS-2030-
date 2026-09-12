@@ -51,7 +51,7 @@ Create a branch: git checkout -b feature/add-note-linking
  ↓
 Develop the change
  ↓
-Test manually (see docs/14_TESTING.md — no automated tests exist yet)
+Test manually (see docs/14_TESTING.md — automated coverage currently starts with the onboarding Compose UI test)
  ↓
 git add . && git commit -m "Add note-to-note linking"
  ↓
@@ -119,3 +119,7 @@ artifact (`lifeos-debug-apk`), downloadable from the Actions run summary.
 workflow's build step from `gradle assembleDebug` to `./gradlew assembleDebug`,
 and remove the explicit `setup-gradle` version pin in favor of letting the
 wrapper resolve its own version automatically.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

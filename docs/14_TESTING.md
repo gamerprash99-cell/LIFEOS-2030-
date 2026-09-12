@@ -5,8 +5,7 @@
 
 ## Current state
 
-**Zero test files exist in this repository.** Confirmed by search: no files
-under any `src/test/` or `src/androidTest/` directory.
+**One Compose UI test file exists in `app/src/androidTest/`.** It covers the first-launch onboarding progression, the restore action exposure, and Skip completion. Broader unit/instrumentation coverage is still pending.
 
 However, the test **frameworks are already declared** as dependencies in
 `app/build.gradle.kts`, ready to use:
@@ -20,9 +19,9 @@ androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 ```
 
 This means: the project is set up to support JUnit unit tests and Compose
-UI tests, but nobody has written any yet.
+UI tests, with the onboarding flow now having a first regression test. Broader coverage is still needed.
 
-## Test frameworks available (but unused)
+## Test frameworks available
 
 | Framework | Type | Would live in |
 |---|---|---|
@@ -32,13 +31,11 @@ UI tests, but nobody has written any yet.
 
 ## Manual testing
 
-⚠️ **NOT VERIFIED FROM CODEBASE** — no manual test checklist, test plan, or
-QA document exists in the repository. All verification of this app to date
-has been by code review (no build environment was available to run it).
+⚠️ **Manual device verification remains pending.** A QA checklist is documented below; no Android build/device environment was available for execution in this archive review.
 
 ## Critical user flows a new developer should manually verify first
 
-Since there is no automated coverage, these are the highest-value manual
+Since automated coverage is still limited, these are the highest-value manual
 checks before trusting any change:
 
 1. **Create → Read → Update → Delete** for each of: Notes, Tasks, Habits,
@@ -70,9 +67,7 @@ checks before trusting any change:
 
 ## Known untested areas
 
-- Backup **import** (`BackupRepository.importFromFile()`) — code exists but
-  has no UI trigger, so it has never been exercised even manually (see
-  `docs/04_FEATURES.md` §14 and `docs/16_KNOWN_ISSUES.md`)
+- Backup **import** (`BackupRepository.importJson()`) — first-launch and Settings UI triggers now exist; device execution remains unverified in this environment
 - Database migrations — schema version is `1` with no migrations written;
   untestable until a schema change actually happens
 - Any behavior on Android versions below 33 for the notification permission
@@ -87,7 +82,10 @@ checks before trusting any change:
       logic in the app and is fully unit-testable without Android dependencies
       if `HabitDao`/`HabitCompletionDao` are faked or an in-memory Room DB is used
 - [ ] Add a Room in-memory-database test for each DAO's core queries
-- [ ] Add a Compose UI test for the Add Task / Add Habit dialogs
+- [ ] Add Compose UI tests for the Add Task / Add Habit dialogs
 - [ ] Add an instrumented test for the `AppLockGate` flow
-- [ ] Set up a GitHub Actions workflow to run `./gradlew test` on every PR
-      once tests exist (see `docs/12_GITHUB_WORKFLOW.md`)
+- [ ] Expand GitHub Actions coverage to run `./gradlew test` and connected UI tests on every PR once a Gradle wrapper is committed
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

@@ -77,7 +77,7 @@ NOW/NEXT sections. Highest priority:
 3. Database and AI API key not encrypted at rest
 4. Backup restore has no UI entry point
 5. Task recurrence field is inert (no scheduler acts on it)
-6. Zero automated tests despite frameworks being declared
+6. Automated coverage is minimal; one Compose onboarding UI test exists, with broader tests still needed
 
 ## Security concerns identified
 
@@ -112,10 +112,10 @@ allowBackup="false" and runtime-only permission requests).
 1. No .git history to build a real changelog from yet
 2. No Gradle wrapper scripts committed
 3. No release signing
-4. No encryption at rest (DB or AI key)
+4. No encryption at rest for the local Room database
 5. No CI/CD
 6. No automated tests
-7. Backup restore not reachable from the UI — **resolved 2026-09-11**
+7. Backup restore not reachable from the UI — **resolved 2026-09-11**; first-launch restore is wired to Android’s JSON document picker
 8. Several data-model fields (task priority/category/repeat) not yet exposed in their creation UI
 
 ## Recommended next documentation tasks
@@ -151,17 +151,12 @@ code across every one of those features, not a mockup.
 
 Everything runs directly on the user's phone. Their data is stored in a
 local database on that device — there's no server and no cloud database.
-The only time the app talks to the outside world is if the user turns on
-AI features and adds their own AI key; even then, only the specific text
-needed for that one action is sent, and every AI suggestion has to be
-manually approved before it's saved.
+The current app does not require or send data to an external AI provider. Local Intelligence runs entirely on-device, and every AI-style suggestion still follows the existing review/approval flow before persistent writes.
 
 ## WHAT TECHNOLOGY IT USES
 
 Kotlin and Jetpack Compose (Google's current, official tools for building
-native Android apps), a local Room/SQLite database, and Anthropic's AI API
-for the optional AI features. No backend framework, no Firebase, no
-cross-platform tool — this is a native Android app.
+native Android apps), a local Room/SQLite database, DataStore, and the on-device LifeOS Intelligence Engine. No backend framework, Firebase, cloud AI service, or mandatory network API is used.
 
 ## WHAT IS COMPLETE
 
@@ -175,14 +170,14 @@ Lock, reminders/notifications, onboarding, and backup export+share.
 The app has never been confirmed to actually build and run in a real
 Android build environment (no such environment was available while it was
 being written). It's not set up to be signed for release or published to
-the Play Store yet. The database and the stored AI key aren't encrypted
-yet. There are no automated tests. A few smaller things are half-built:
-you can back up your data but there's no button yet to restore it, and
+the Play Store yet. The local database is not encrypted at rest yet
+yet. Automated coverage is still limited to the new onboarding Compose UI test. A few smaller things are half-built:
+the first-launch flow now has a working Restore a LifeOS backup action, and
 recurring tasks don't actually repeat yet even though the setting exists.
 
 ## BIGGEST RISKS
 
-1. No encryption yet on the local database or the saved AI key — this
+1. The local database is not encrypted at rest yet — this
    matters because this app is meant to hold your diary and personal notes.
    This should be fixed before real people trust it with real data.
 2. It hasn't been proven to actually build in a real environment yet — the
@@ -205,7 +200,7 @@ documented — a new developer shouldn't need to "rediscover" any of them.
 2. Fix the missing Gradle wrapper files so it builds from a clean checkout
 3. Open it in Android Studio and get a real, confirmed successful build
 4. Add release signing configuration
-5. Add encryption for the local database and the saved AI key
+5. Add encryption for the local database
 6. Add a "Restore backup" button in Settings (the underlying code already exists)
 7. Add automated tests, starting with the habit streak/heatmap logic
 8. Set up a basic GitHub Actions workflow to build automatically on every change
@@ -219,3 +214,7 @@ Documentation was refreshed after the responsive UI/capture/App Lock pass. Curre
 ## 2026-09-12 documentation review
 
 The entire `docs/` tree and root `README.md` were reviewed against the current source archive. Relevant documentation was updated for the new Timeline presentation, multiple local math alarms, full-screen Audio Capture and verification limitations. Architecture/database/security documents remain unchanged where the implementation did not change their subject matter; no documentation was deleted or truncated.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.

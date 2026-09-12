@@ -3,9 +3,9 @@ package com.lifeos.app.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // LifeOS brand: purple/violet first. Both themes keep the same identity.
-val LifeOSBackgroundLight = Color(0xFFFDF8FF)
+val LifeOSBackgroundLight = Color(0xFFF7F2FF)
 val LifeOSBackgroundDark = Color(0xFF090611)
-val LifeOSSurfaceLight = Color(0xFFFFFFFF)
+val LifeOSSurfaceLight = Color(0xFFFFFBFF)
 val LifeOSSurfaceDark = Color(0xFF171124)
 val LifeOSSurfaceElevatedDark = Color(0xFF1E162D)
 

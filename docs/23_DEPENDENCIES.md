@@ -70,3 +70,7 @@ crash-reporting SDK, any ads SDK, any payments SDK.
 ## 2026-09-12 current verification
 
 The current `app/build.gradle.kts` contains no OkHttp dependency and the Android manifest declares no `INTERNET` permission. `core/ai/AiClient.kt` is absent; local intelligence is implemented under `core/intelligence/`. Historical dependency rows referring to cloud AI are retained only for project history.
+
+## 2026-09-12 — Current-state documentation refresh
+
+Reviewed against the supplied LifeOS source archive during the onboarding/UI and code-cleanup pass. The current first-launch flow is five interactive screens with working Start/Next/Skip/Get started controls and Android JSON restore through the existing local `BackupRepository`. The implementation remains Kotlin + Jetpack Compose + Room + manual ServiceLocator + Compose Navigation, with on-device Intelligence and no mandatory cloud/API dependency. Historical sections are retained where they describe earlier project states.
