@@ -8,7 +8,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -35,79 +34,34 @@ fun CaptureSheet(onDismiss: () -> Unit) {
             val today = DateTimeUtils.today()
             val time = java.time.LocalTime.now()
             locator.captureRepository.addCapture(
-                type,
-                path,
-                caption,
-                today.toEpochDay(),
-                time.hour * 60 + time.minute
+                type = type,
+                filePath = path,
+                caption = caption,
+                dateEpochDay = today.toEpochDay(),
+                timeMinutes = time.hour * 60 + time.minute
             )
-            if (confirm) {
-                captured = JustCaptured(type, path)
-                mode = CaptureMode.CONFIRM
-            } else {
-                onDismiss()
-            }
+            if (confirm) { captured = JustCaptured(type, path); mode = CaptureMode.CONFIRM } else onDismiss()
         }
     }
 
-    // Camera/video are true full-screen experiences. They no longer sit inside
-    // a partially expanded bottom sheet, so the user never has to drag the UI
-    // upward before the shutter/record controls are reachable.
     if (mode == CaptureMode.PHOTO || mode == CaptureMode.VIDEO) {
-        Dialog(
-            onDismissRequest = { mode = CaptureMode.MENU },
-            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
-        ) {
+        Dialog(onDismissRequest = { mode = CaptureMode.MENU }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
             Box(Modifier.fillMaxSize()) {
-                if (mode == CaptureMode.PHOTO) {
-                    CameraCaptureScreen(
-                        onCaptured = { save(CaptureType.PHOTO, it, null, true) },
-                        onCancel = { mode = CaptureMode.MENU }
-                    )
-                } else {
-                    VideoCaptureScreen(
-                        onCaptured = { save(CaptureType.VIDEO, it, null, true) },
-                        onCancel = { mode = CaptureMode.MENU }
-                    )
-                }
+                if (mode == CaptureMode.PHOTO) CameraCaptureScreen(onCaptured = { save(CaptureType.PHOTO, it, null, true) }, onCancel = { mode = CaptureMode.MENU })
+                else VideoCaptureScreen(onCaptured = { save(CaptureType.VIDEO, it, null, true) }, onCancel = { mode = CaptureMode.MENU })
             }
         }
         return
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
-        dragHandle = { BottomSheetDefaults.DragHandle() }
-    ) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp), dragHandle = { BottomSheetDefaults.DragHandle() }) {
         when (mode) {
-            CaptureMode.MENU -> Column(
-                Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp).padding(bottom = 18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
+            CaptureMode.MENU -> Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp).padding(bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Text("Capture a moment", style = MaterialTheme.typography.headlineSmall)
-                Text(
-                    "Save a thought, photo, video or audio to your Timeline.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                OutlinedTextField(
-                    value = thought,
-                    onValueChange = { thought = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Jot a quick thought…") },
-                    minLines = 2,
-                    maxLines = 4
-                )
-                Button(
-                    enabled = thought.isNotBlank(),
-                    onClick = { save(CaptureType.THOUGHT, null, thought, true) },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Filled.Save, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Save thought")
+                Text("Save a thought, photo, video or audio to your Timeline.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                OutlinedTextField(value = thought, onValueChange = { thought = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("Jot a quick thought…") }, minLines = 2, maxLines = 4)
+                Button(enabled = thought.isNotBlank(), onClick = { save(CaptureType.THOUGHT, null, thought, true) }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Filled.Save, null); Spacer(Modifier.width(8.dp)); Text("Save thought")
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     CaptureTypeButton(Icons.Filled.CameraAlt, "Photo") { mode = CaptureMode.PHOTO }
@@ -115,48 +69,22 @@ fun CaptureSheet(onDismiss: () -> Unit) {
                     CaptureTypeButton(Icons.Filled.Mic, "Audio") { mode = CaptureMode.AUDIO }
                 }
             }
-            CaptureMode.AUDIO -> Column(
-                Modifier.fillMaxWidth().navigationBarsPadding().padding(20.dp)
-            ) {
-                AudioCaptureScreen(
-                    onCaptured = { save(CaptureType.AUDIO, it, null, true) },
-                    onCancel = { mode = CaptureMode.MENU }
-                )
+            CaptureMode.AUDIO -> Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(20.dp)) {
+                AudioCaptureScreen(onCaptured = { save(CaptureType.AUDIO, it, null, true) }, onCancel = { mode = CaptureMode.MENU })
             }
             CaptureMode.CONFIRM -> {
                 val c = captured
-                Column(
-                    Modifier.fillMaxWidth().navigationBarsPadding().padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
+                Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     LifeOSCard {
                         Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
-                            Spacer(Modifier.width(10.dp))
+                            Icon(Icons.Filled.CheckCircle, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(10.dp))
                             Column {
                                 Text("Saved to Timeline", style = MaterialTheme.typography.titleLarge)
-                                Text(
-                                    when (c?.type) {
-                                        CaptureType.PHOTO -> "Photo ready"
-                                        CaptureType.VIDEO -> "Video ready"
-                                        CaptureType.AUDIO -> "Audio ready"
-                                        else -> "Thought saved"
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Text(when (c?.type) { CaptureType.PHOTO -> "Photo ready"; CaptureType.VIDEO -> "Video ready"; CaptureType.AUDIO -> "Audio ready"; else -> "Thought saved" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
-                    c?.filePath?.let {
-                        when (c.type) {
-                            CaptureType.PHOTO -> PhotoPreview(it)
-                            CaptureType.VIDEO -> VideoPreview(it)
-                            CaptureType.AUDIO -> AudioPreview(it)
-                            else -> Unit
-                        }
-                    }
+                    c?.filePath?.let { path -> when (c.type) { CaptureType.PHOTO -> PhotoPreview(path); CaptureType.VIDEO -> VideoPreview(path); CaptureType.AUDIO -> AudioPreview(path); else -> Unit } }
                     Text("Your original file stays on this device.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text("Done") }
                 }
@@ -167,24 +95,10 @@ fun CaptureSheet(onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun RowScope.CaptureTypeButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    onClick: () -> Unit
-) {
-    OutlinedCard(
-        onClick = onClick,
-        modifier = Modifier.weight(1f).height(88.dp),
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Column(
-            Modifier.fillMaxSize().padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.height(5.dp))
-            Text(label, style = MaterialTheme.typography.labelLarge)
+private fun RowScope.CaptureTypeButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
+    OutlinedCard(onClick = onClick, modifier = Modifier.weight(1f).height(88.dp), shape = MaterialTheme.shapes.medium) {
+        Column(Modifier.fillMaxSize().padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Icon(icon, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.height(5.dp)); Text(label, style = MaterialTheme.typography.labelLarge)
         }
     }
 }
