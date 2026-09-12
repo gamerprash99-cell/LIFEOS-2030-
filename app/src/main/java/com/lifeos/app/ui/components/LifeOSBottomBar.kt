@@ -1,24 +1,26 @@
 package com.lifeos.app.ui.components
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.LocalFireDepartment
-import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Timeline
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -60,15 +62,13 @@ fun LifeOSBottomBar(navController: NavHostController) {
         modifier = Modifier.fillMaxWidth(),
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = .96f),
         tonalElevation = 0.dp,
-        windowInsets = androidx.compose.foundation.layout.WindowInsets.navigationBars
+        windowInsets = WindowInsets.navigationBars
     ) {
         items.forEach { item ->
             val selected = currentRoute == item.screen.route || (item.screen == Screen.Home && currentRoute == Screen.Home.route)
             NavigationBarItem(
                 selected = selected,
                 onClick = {
-                    // Home is always a safe anchor. This avoids a stale restored child state
-                    // swallowing a tap when returning from Expenses/Timeline.
                     if (item.screen == Screen.Home) {
                         navController.popBackStack(Screen.Home.route, inclusive = false)
                     } else {
